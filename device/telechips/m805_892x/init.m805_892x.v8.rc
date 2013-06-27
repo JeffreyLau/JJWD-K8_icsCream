@@ -1,0 +1,19 @@
+on early-init
+    insmod /lib/modules/tcc_nand_v8.ko
+    insmod /lib/modules/tcc_init_nand_v8.ko
+
+on fs
+# mount emmc ext4 file system
+    mount ext4 /dev/block/ndda2 /system wait ro
+    mount ext4 /dev/block/ndda3 /data wait noatime nosuid nodev nomblk_io_submit,errors=panic
+    mount ext4 /dev/block/ndda5 /cache wait noatime nosuid nodev nomblk_io_submit,errors=panic
+
+on boot
+    setprop ro.crypto.keyfile.userdata /dev/block/ndda3
+
+# create filesystems if necessary
+service setup_fs /system/bin/setup_fs ndda3 ndda5
+    class core
+    user root
+    group root
+    oneshot

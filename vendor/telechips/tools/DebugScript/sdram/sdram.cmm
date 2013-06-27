@@ -1,0 +1,114 @@
+//===========================================================================
+//
+//                       ANDROID TRACE32 CMM FILE
+//
+//                        EDIT HISTORY FOR MODULE
+//
+//---------------------------------------------------------------------------
+// version     who      history
+//---------------------------------------------------------------------------
+// 110407-1   Bruce     Create file
+//===========================================================================
+
+
+	ENTRY &sdram
+
+	if "&sdram"=="TCC88xx_CT83486C1_x2"
+	(
+		do sdram\TCC88xx_CT83486C1_x2
+	)
+	else if "&sdram"=="TCC88xx_HXB18T2G160AF_x2"
+	(
+		do sdram\TCC88xx_HXB18T2G160AF_x2
+	)
+	else if "&sdram"=="TCC88xx_HY5PS1G1631CFPS6_x2"
+	(
+		do sdram\TCC88xx_HY5PS1G1631CFPS6_x2
+	)
+	else if "&sdram"=="TCC88xx_HY5PS1G1631CFPS6_x4"
+	(
+		do sdram\TCC88xx_HY5PS1G1631CFPS6_x4
+	)
+	else if "&sdram"=="TCC88xx_HY5PS1G831CFPS6_x4"
+	(
+		do sdram\TCC88xx_HY5PS1G831CFPS6_x4
+	)
+	else if "&sdram"=="TCC88xx_MT47H256M8EB25E_x4"
+	(
+		do sdram\TCC88xx_MT47H256M8EB25E_x4
+	)
+	else if "&sdram"=="TCC88xx_K4T1G164QE_HCF7_x4"
+	(
+		do sdram\TCC88xx_K4T1G164QE_HCF7_x4
+	)
+	else if "&sdram"=="TCC88xx_H5TQ2G63BFR_H9C_x2"
+	(
+		do sdram\TCC88xx_H5TQ2G63BFR_H9C_x2
+	)
+	else if "&sdram"=="TCC88xx_H5TQ2G83BFA_H9C_x4"
+	(
+		do sdram\TCC88xx_H5TQ2G83BFA_H9C_x4
+	)
+	else if "&sdram"=="TCC88xx_K4B1G1646E_HCH9_x2"
+	(
+		do sdram\TCC88xx_K4B1G1646E_HCH9_x2
+	)
+	else if "&sdram"=="TCC88xx_K4B2G1646C_HCK0_x2"
+	(
+		do sdram\TCC88xx_K4B2G1646C_HCK0_x2
+	)
+	else if "&sdram"=="TCC93xx_HXB18T2G160AF_x2"
+	(
+		do sdram\TCC93xx_HXB18T2G160AF_x2
+	)
+	else if "&sdram"=="TCC93xx_HY5PS1G1631CFPS6_x2"
+	(
+		do sdram\TCC93xx_HY5PS1G1631CFPS6_x2
+	)
+	else if "&sdram"=="TCC93xx_HY5PS1G1631CFPS6_x4"
+	(
+		do sdram\TCC93xx_HY5PS1G1631CFPS6_x4
+	)
+	else if "&sdram"=="TCC93xx_HY5PS1G831CFPS6_x4"
+	(
+		do sdram\TCC93xx_HY5PS1G831CFPS6_x4
+	)
+	else if "&sdram"=="TCC93xx_H5TQ2G63BFR_H9C_x2"
+	(
+		do sdram\TCC93xx_H5TQ2G63BFR_H9C_x2
+	)
+	else if "&sdram"=="TCC93xx_K4B1G1646E_HCH9_x2"
+	(
+		do sdram\TCC93xx_K4B1G1646E_HCH9_x2
+	)
+	else if "&sdram"=="TCC93xx_K4B2G1646C_HCK0_x2"
+	(
+		do sdram\TCC93xx_K4B2G1646C_HCK0_x2
+	)
+	else if "&sdram"=="TCC89xx_HY5PS1G1631CFPS6_x2"
+	(
+		do sdram\TCC89xx_HY5PS1G1631CFPS6_x2
+	)
+	else if "&sdram"=="TCC92xx_HY5PS1G1631CFPS6_x2"
+	(
+		do sdram\TCC92xx_HY5PS1G1631CFPS6_x2
+	)
+	else if "&sdram"=="TCC892x_HY5PS1G831CFPS6_x4"
+	(
+		do sdram\TCC892x_HY5PS1G831CFPS6_x4
+	)
+	else
+	(
+		print "unknown memory type..!!"
+	)
+
+	print "&sdram init"
+
+enddo
+//----------------------------------------------------------
+
+
+
+
+
+

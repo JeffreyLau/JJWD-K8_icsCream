@@ -1,0 +1,4 @@
+lib/*.jar
+bin/*
+.settings/*
+

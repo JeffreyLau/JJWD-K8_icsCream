@@ -1,0 +1,133 @@
+import init.tcc8920.fs.rc
+import init.tcc8920.usb.rc
+import init.tcc8920.wifi.rc
+
+on early-init
+    export EXTERNAL_STORAGE /mnt/sdcard
+    export EXTERNAL_SD_STORAGE /mnt/ext_sd
+    export EXTERNAL_PRIMARY_STORAGE /mnt/sdcard
+    mkdir /mnt/usb_sda1 0000 system system
+    mkdir /mnt/usb_sdb1 0000 system system
+    mkdir /mnt/sdcard 0000 system system
+    mkdir /mnt/ext_sd 0000 system system
+    # for backwards compatibility
+    symlink /mnt/sdcard /sdcard
+    chmod 0777 /system/bin/ba_svc
+
+on post-fs-data
+    mkdir /data/misc/wifi 0770 wifi wifi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    chown dhcp dhcp /data/misc/dhcp
+
+    setprop vold.post_fs_data_done 1
+
+# change permission for graphics node
+	chmod 0666 /dev/graphics/fb0
+
+# change permission for gps uart  # tcc-uart => ttyTCC3
+    setprop ro.kernel.android.gps ttyTCC3
+            chmod 0666 /dev/ttyTCC3
+            chmod 0666 /dev/gps_gpio
+
+# permissions for bluetooth.
+	#setprop ro.bt.bdaddr_path "/factory/bluetooth/bt_addr"
+	#chown bluetooth bluetooth ro.bt.bdaddr_path
+	#chown bluetooth bluetooth /dev/ttyO1
+	#chmod 0600 /dev/ttyO1
+	chmod 0660 /sys/class/rfkill/rfkill0/state
+	chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
+	chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
+
+on boot
+    insmod /lib/modules/ufsd.ko
+#    insmod /system/lib/modules/vpu_manager.ko
+#    insmod /system/lib/modules/vpu_decoder.ko
+#    insmod /system/lib/modules/vpu_decoder_ext.ko
+#    insmod /system/lib/modules/vpu_encoder.ko
+
+    mount debugfs /sys/kernel/debug /sys/kernel/debug
+
+service quickboot /system/bin/quickboot
+    class core
+    socket quickboot stream 0660 root system
+
+service dhcpcd_eth0 /system/bin/dhcpcd -ABKL
+    disabled
+    oneshot
+
+service dhcpcd_bnep0 /system/bin/dhcpcd -ABKL
+    disabled
+    oneshot
+
+service iprenew_bnep0 /system/bin/dhcpcd -n
+        class main
+        disabled
+        oneshot
+
+
+# for CSR Module
+#service bccmd /system/bin/bccmd -t bcsp -d /dev/ttyTCC1 -b 115200  psload /system/key_921600.psr
+service bccmd /system/bin/bccmd -t bcsp -d /dev/ttyTCC1 -b 115200 psload /system/key_3000000.psr
+    class main
+    disabled
+    oneshot
+
+# for BRCM Module
+#service bcmtool /system/xbin/bcmtool /dev/ttyTCC1 -FILE=/system/BCM4325D0.hcd -ADDR=/system/sample.bdaddr -BAUD=921600
+#service bcmtool /system/xbin/bcmtool /dev/ttyTCC1 -FILE=/system/BCM4325D0.hcd -ADDR=/system/sample.bdaddr -BAUD=3000000 -SCO -SETSCO=0,1,0,1,1,0,0,3,3,0 -LP
+#   disabled
+#   oneshot
+
+#service hciattach /system/bin/hciattach -n -s 3000000 /dev/ttyTCC1 any 3000000 flow
+#service hciattach /system/bin/hciattach -n -s 921600 /dev/ttyTCC1 bcsp 921600
+service hciattach /system/bin/hciattach -n -s 3000000 /dev/ttyTCC1 bcsp 3000000
+#service hciattach /system/bin/hciattach -n -s 115200 /dev/ttyTCC1 rda 3000000 flow
+#service hciattach /system/bin/hciattach -n -s 115200 /dev/ttyTCC1 ath3k 3000000 flow
+#   user bluetooth
+#   group bluetooth net_bt_admin
+    class main
+    disabled
+#   oneshot
+#service hciattach /system/bin/brcm_patchram_plus --enable_hci --no2bytes \
+#        --tosleep 500000 --baudrate 3000000 --use_baudrate_for_download --i2s=1,1,0,1 \
+#        --patchram /system/bcm4330.hcd /dev/ttyTCC1
+#        class main
+#        user bluetooth
+#        group bluetooth net_bt_admin
+#        disabled
+#        oneshot
+
+#compass daemon
+service akmd8975 /system/bin/akmd8975
+    user compass
+    group compass misc input
+    disabled
+
+on property:hw.sensor.ak8975=1
+    start akmd8975
+
+on property:dhcp.bnep0.result=""
+    stop dhcpcd
+
+#for telechips broadcasting service
+service tcc_dxb_service /system/bin/tcc_dxb_service
+    class main
+    user root
+
+on property:tcc.remoteplayer.control=stop
+    stop tcc_r_service
+
+on property:tcc.remoteplayer.control=start
+    start tcc_r_service
+
+service tcc_r_service /system/bin/remote_player_service
+    user root
+    disabled
+    oneshot
+
+service ba_svc /system/bin/ba_svc
+    class main
+    user root
+    group root

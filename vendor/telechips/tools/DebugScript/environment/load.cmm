@@ -1,0 +1,56 @@
+//===========================================================================
+//
+//                       ANDROID TRACE32 CMM FILE
+//
+//                        EDIT HISTORY FOR MODULE
+//
+//---------------------------------------------------------------------------
+// version     who      history
+//---------------------------------------------------------------------------
+// 110407-1   Bruce     Create file
+//===========================================================================
+
+	ENTRY &chipset_file &srcpath_file &bootloadersymbol_file &sdram_file
+
+	if os.dir(environment)
+	(
+		cd environment
+
+		if os.file(&chipset_file)
+		(
+			open #1 "&chipset_file" /read
+			read #1 %line &chipset
+			close #1
+			dialog.SET CHIPSET "&chipset"
+		)
+		if os.file(&srcpath_file)
+		(
+			open #1 "&srcpath_file" /read
+			read #1 %line &srcpath
+			close #1
+			dialog.SET SOURCEPATH "&srcpath"
+		)
+		if os.file(&bootloadersymbol_file)
+		(
+			open #1 "&bootloadersymbol_file" /read
+			read #1 %line &bootloadersymbol
+			close #1
+			dialog.SET BOOTSYMBOLPATH "&bootloadersymbol"
+		)
+		if os.file(&sdram_file)
+		(
+			open #1 "&sdram_file" /read
+			read #1 %line &sdram
+			close #1
+			dialog.SET SDRAM "&sdram"
+		)
+
+		cd ..
+	)
+	else
+	(
+		print "The directory to load environment don't exist!"
+	)
+
+ENDDO
+//----------------------------------------------------------

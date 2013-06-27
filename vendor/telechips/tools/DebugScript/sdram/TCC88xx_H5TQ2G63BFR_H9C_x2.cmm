@@ -1,0 +1,438 @@
+
+//---------------------------------------------------------------------------
+// DDR3 Configuation
+
+&DDR3_PHYSICAL_CHIP_NUM=2
+&DDR3_LOGICAL_CHIP_NUM=1
+&DDR3_MAX_SPEED=0x535           //DDR3_1333
+&DDR3_CL=9
+&DDR3_AL=0                //AL_DISABLED
+&DDR3_BURST_LEN=0                //BL_8
+&DDR3_READ_BURST_TYPE=0 //RBT_SEQUENTIAL
+&DDR3_TOTAL_MB_SIZE=0x200             //512
+&DDR3_ROWBITS=0xe                    //14
+&DDR3_COLBITS=0xa                    //10
+&DDR3_BANK_NUM=8
+
+//---------------------------------------------------------------------------
+// DDR3 Access Timing Parameters
+
+&DDR3_tRFC_ps=0x27100                //160000
+&DDR3_tREFI_ps=0x7704C0              //7800000
+&DDR3_tRCD_ps=0x34BC                 //13500
+&DDR3_tRCD_ck=1
+&DDR3_tRP_ps=0x34BC                  //13500
+&DDR3_tRP_ck=1
+&DDR3_tRC_ps=0xC15C                  //49500
+&DDR3_tRC_ck=1
+&DDR3_tRAS_ps=0x8CA0                 //36000
+&DDR3_tRAS_ck=1
+&DDR3_tRTP_ps=0x1D4C                  //7500
+&DDR3_tRTP_ck=4
+&DDR3_tWTR_ps=0x1D4C                  //7500
+&DDR3_tWTR_ck=4
+&DDR3_tWR_ps=0x3A98                  //15000
+&DDR3_tWR_ck=1
+&DDR3_tRRD_ps=0x1D4C                  //7500
+&DDR3_tRRD_ck=5
+&DDR3_tFAW_ps=0xAFC8                 //45000
+&DDR3_tFAW_ck=0x1E                   //30
+&DDR3_tXS_ps=&DDR3_tRFC_ps+0x2710
+&DDR3_tXS_ck=5
+&DDR3_tXP_ps=0x1770                   //6000
+&DDR3_tXP_ck=3
+&DDR3_tCKE_ps=0x15F9                  //5625
+&DDR3_tCKE_ck=3
+&DDR3_tMRD_ck=4
+
+//---------------------------------------------------------------------------
+// DDR3 Driving Strength
+
+&MEMCTRL_DDS=6
+&MEMCTRL_TERM=2
+&DDR3_DIC=1
+&DDR3_ODT=1
+
+//---------------------------------------------------------------------------
+
+&DDR3_CLK=0x140	//320
+&tCK=(0xF4240/&DDR3_CLK)
+
+//---------------------------------------------------------------------------
+
+local &i &j
+
+//--------------------------------------------------------------------------
+//Change to config mode
+	d.s 0xF0303020 %L 0x0003010B //EMCCFG
+
+	&i=0.
+	while &i<20.
+	(
+	    &i=&i+1
+	)
+
+//--------------------------------------------------------------------------
+//Clock setting..
+
+	//Set CLKDIVC0,CLKDIVC1. But it is diabled.
+	d.s 0xF0400030 %L 0x01010101;
+	d.s 0xF0400034 %L 0x01010101;
+	d.s 0xF0400038 %L 0x01010101;
+
+	//cpu bus - DirectXIN, Synchronous clock mode 
+	d.s 0xF0400000 %L 0x002ffff4;
+	//mem bus - DirectXIN/2(It is for asynchronous clock mode) 
+	d.s 0xF0400008 %L 0x002f1f14;
+	//io bus - DirectXIN/2
+	d.s 0xF0400010 %L 0x002f1f14;
+	//smu bus
+	d.s 0xF040001C %L 0x002f1f14;
+
+	//cpu pll
+	d.s 0xF0400054 %L 0x41019003;
+	d.s 0xF0400054 %L 0xC1019003;
+	
+	//PLL3
+	if data.long(R:0x3000008C)==0x10004450
+	(
+		d.s 0xF040002C %L 0x4000A003
+		d.s 0xF040002C %L 0xC000A003
+	)
+	else
+	(
+		d.s 0xF0400050 %L 0x01014003
+		d.s 0xF0400050 %L 0x81014003
+	)
+
+	&i=0.
+	while &i<20.
+	(
+		&i=&i+1
+	)
+
+	d.s 0xF0400000 %L 0x002FFFF9;  // cpu
+	if data.long(R:0x3000008C)==0x10004450
+	(
+		d.s 0xF0400008 %L 0x00200013  // mem bus
+		d.s 0xF0400010 %L 0x00200013  // io bus
+	)
+	else
+	(
+		d.s 0xF0400008 %L 0x00200018  // mem bus
+		d.s 0xF0400010 %L 0x00200018  // io bus
+	)
+	d.s 0xF040001C %L 0x00200039  // smu bus
+
+	&i=0.
+	while &i<20.
+	(
+		&i=&i+1
+	)
+
+//--------------------------------------------------------------------------
+//DDR3 Phy setting..
+
+	d.s 0xF0303024 %L 0x00000300 ;//PHYCFG
+	d.s 0xF0304400 %L 0x0000000A ;//PHYMODE
+
+	//Bruce, 101029, modify according to soc guide
+	//d.s 0xF0309400 %L 0x00101708  ;//PhyControl0
+	d.s 0xF0309400 %L 0x0110140A  ;//PhyControl0
+
+	d.s 0xF0309404 %L 0x00000086  ;//PhyControl1
+	d.s 0xF0309408 %L 0x00000000  ;//PhyControl2
+	d.s 0xF030940c %L 0x00000000  ;//PhyControl3
+	d.s 0xF0309410 %L 0x201c7004  ;//PhyControl4
+
+	//Bruce, 101029, modify according to soc guide
+	//d.s 0xF0309400 %L 0x0110170B  ;//PhyControl0
+	//while (((d.s 0xF0309418)) & (0x04)) != 4);	// dll locked
+	if &DDR3_CLK>=0x14D  //333
+		d.s 0xF0309400 %L 0x0110140B  ;//PhyControl0
+	else
+		d.s 0xF0309400 %L 0x0110140F  ;//PhyControl0
+
+	//while (((d.s 0xF0309418)) & (0x04)) != 4);	// dll locked
+	&i=0.
+	while &i!=4
+	(
+		&i=data.long(R:0xF0309418)
+		&i=&i&0x04
+	)
+
+	d.s 0xF0309404 %L 0x0000008e  ;//PhyControl1
+	d.s 0xF0309404 %L 0x00000086  ;//PhyControl1
+
+	//Bruce, 101029, modify according to soc guide
+	//d.s 0xF0309414 %L 0x00030003  ;//PhyControl5
+	d.s 0xF0309414 %L 0x00020003  ;//PhyControl5
+
+	d.s 0xF0309414 %L 0x0000000b|(&MEMCTRL_DDS<<0xF)|(&MEMCTRL_TERM<<0xB) ;//PhyControl5
+
+	//while (((d.s 0xF0309420)) & (0x01)) != 1);	// zq end
+	&i=0.
+	while &i!=1
+	(
+		&i=data.long(R:0xF0309420)
+		&i=&i&0x01
+	)
+
+//--------------------------------------------------------------------------
+// Memory config
+
+	&memctrl=0x0000000A
+	if &DDR3_BURST_LEN==0 // BL_8:0
+		&memctrl=&memctrl|(0x3<<7)
+	else
+		&memctrl=&memctrl|(0x2<<7)
+
+	if &DDR3_LOGICAL_CHIP_NUM==1 // num_chip
+		&memctrl=&memctrl|(0x0<<5)
+	else
+		&memctrl=&memctrl|(0x1<<5)
+	
+	d.s 0xF0309004 %L &memctrl ; //MemControl
+
+	// Chip 0 Configuration ------------------------------------------------
+	(
+		&memctrl=0x40001000|((0xFF-((&DDR3_TOTAL_MB_SIZE)/(&DDR3_LOGICAL_CHIP_NUM*0x10)-1))<<0x10)|((&DDR3_COLBITS-7)<<8)|((&DDR3_ROWBITS-0xC)<<4)
+		if &DDR3_BANK_NUM==8 //8 banks
+			&memctrl=&memctrl|0x3
+		else // 4 banks
+			&memctrl=&memctrl|0x2
+
+		d.s 0xF0309008 %L &memctrl //MemConfig0
+	)
+
+	// Chip 1 Configuration ------------------------------------------------
+	if &DDR3_LOGICAL_CHIP_NUM==2
+	(
+		&memctrl=((0x40+(&DDR3_TOTAL_MB_SIZE)/(&DDR3_LOGICAL_CHIP_NUM*0x10))<<0x18)|((0xFF-((&DDR3_TOTAL_MB_SIZE)/(&DDR3_LOGICAL_CHIP_NUM*0x10)-1))<<0x10)|((&DDR3_COLBITS-7)<<8)|((&DDR3_ROWBITS-0xC)<<4)
+		if &DDR3_BANK_NUM==8 //8 banks
+			&memctrl=&memctrl|0x3
+		else // 4 banks
+			&memctrl=&memctrl|0x2
+
+		d.s 0xF030900C %L &memctrl //MemConfig1
+	)
+
+//--------------------------------------------------------------------------
+
+	d.s 0xF0309000 %L 0x40FF3010  ;//ConControl
+	d.s 0xF0309014 %L 0x01000000  ;//PrechConfig
+
+//--------------------------------------------------------------------------
+// Timing parameter setting.
+
+	d.s 0xF0309100 %L ((&DDR3_tREFI_ps+&tCK-1)/&tCK) //T_REFI
+	d.s 0xF0309104 %L ((&DDR3_tRFC_ps+&tCK-1)/&tCK) //T_RFC
+	d.s 0xF0309108 %L ((&DDR3_tRRD_ps+&tCK-1)/&tCK) //T_RRD
+	d.s 0xF030910c %L &DDR3_CL; //T_RP
+	d.s 0xF0309110 %L &DDR3_CL; //T_RCD
+	d.s 0xF0309114 %L ((&DDR3_tRC_ps+&tCK-1)/&tCK) //T_RC
+	d.s 0xF0309118 %L ((&DDR3_tRAS_ps+&tCK-1)/&tCK) //T_RAS
+	d.s 0xF030911c %L ((&DDR3_tWTR_ps+&tCK-1)/&tCK) //T_WTR
+	d.s 0xF0309120 %L ((&DDR3_tWR_ps+&tCK-1)/&tCK) //T_WR
+	d.s 0xF0309124 %L ((&DDR3_tRTP_ps+&tCK-1)/&tCK) //T_RTP
+	d.s 0xF0309128 %L &DDR3_CL; //CL
+
+	if &tCK>=0x9C4 //2500 /* 2.5 ns */)
+		&memctrl=0x5
+	else if tCK>=0x753 //1875 /* 1.875 ns */)
+		&memctrl=0x6
+	else if tCK>=0x5DC //1500 /* 1.5 ns */)
+		&memctrl=0x7
+	else if tCK>=0x4E2 //1250 /* 1.25 ns */)
+		&memctrl=0x8
+	else if tCK>=0x42E //1070 /* 1.07 ns */)
+		&memctrl=0x9
+	else if tCK>=0x3A7 //935 /* 0.935 ns */)
+		&memctrl=0xA
+	else if tCK>=0x341 //833 /* 0.833 ns */)
+		&memctrl=0xB
+	else if tCK>=0x2EE //750 /* 0.75 ns */)
+		&memctrl=0xC
+
+	if &DDR3_AL==0x1 //AL_CL_MINUS_ONE:1 //nAL = nCL - 1;
+	(
+		d.s 0xF030912c %L &memctrl|(&DDR3_CL-1) //WL = AL+CWL
+		d.s 0xF0309130 %L &DDR3_CL|(&DDR3_CL-1); //RL = AL+CL
+	)
+	else if &DDR3_AL==2 //AL_CL_MINUS_TWO:2 //nAL = nCL - 2;
+	(
+		d.s 0xF030912c %L &memctrl|(&DDR3_CL-2) //WL = AL+CWL
+		d.s 0xF0309130 %L &DDR3_CL|(&DDR3_CL-2); //RL = AL+CL
+	)
+	else
+	(
+		d.s 0xF030912c %L &memctrl //WL = AL+CWL
+		d.s 0xF0309130 %L &DDR3_CL //RL = AL+CL
+	)
+
+	d.s 0xF0309134 %L ((&DDR3_tFAW_ps+&tCK-1)/&tCK) //T_FAW
+	d.s 0xF0309138 %L ((&DDR3_tXS_ps+&tCK-1)/&tCK) //T_XSR
+	d.s 0xF030913c %L ((&DDR3_tXP_ps+&tCK-1)/&tCK) //T_XP
+	d.s 0xF0309140 %L ((&DDR3_tCKE_ps+&tCK-1)/&tCK) //T_CKE
+	d.s 0xF0309144 %L &DDR3_tMRD_ck //T_MRD
+
+//--------------------------------------------------------------------------
+// MRS Setting
+
+	d.s 0xF0309010 %L 0x08000000 //DirectCmd - XSR
+	
+	//after 500 us
+	d.s 0xF0309010 %L 0x07000000 //DirectCmd - NOP
+
+	//d.s 0xF0309010 %L 0x00020000 //DirectCmd - MRS : MR2
+	(
+		&mr=0x00020000
+
+		if &DDR3_CLK*2<=0x320 //DDR3_800
+			&mr=&mr|(0<<3)
+		else if &DDR3_CLK*2<=0x42A //DDR3_1066
+			&mr=&mr|(1<<3)
+		else if &DDR3_CLK*2<=0x535 //DDR3_1333
+			&mr=&mr|(2<<3)
+		else if &DDR3_CLK*2<=0x640 //DDR3_1600
+			&mr=&mr|(3<<3)
+
+		d.s 0xF0309010 %L &mr
+	)
+
+	d.s 0xF0309010 %L 0x00030000 //DirectCmd - MRS : MR3
+	d.s 0xF0309010 %L 0x00010000|(&DDR3_AL<<3)|(&DDR3_ODT<<2)|(&DDR3_DIC<<1) //DirectCmd - MRS : MR1 : DLL(enable)
+
+	//d.s 0xF0309010 %L 0x00001420;//DirectCmd - MRS : MR0 : DLLPRE(off), WR(), DLL Reset(Yes), MODE(0), CL(), BL(8)
+	(
+		&mr=&DDR3_BURST_LEN|(&DDR3_READ_BURST_TYPE<<3)|(1<<0xC)
+
+		if &DDR3_CL<5
+			&mr=&mr|((5-4)<<4)
+		else if &DDR3_CL>0xB
+			&mr=&mr|((0xB-4)<<4)
+		else
+			&mr=&mr|((&DDR3_CL-4)<<4)
+
+		if &tCK>=0x9C4 // 2.5 ns
+			&mr=&mr|(1<<9)
+		else if tCK>=0x753 // 1.875 ns
+			&mr=&mr|(2<<9)
+		else if tCK>=0x5DC // 1.5 ns
+			&mr=&mr|(3<<9)
+		else if tCK>=0x4E2 // 1.25 ns
+			&mr=&mr|(4<<9)
+		else if tCK>=0x3A7 // 0.935 ns
+			&mr=&mr|(5<<9)
+		else
+			&mr=&mr|(6<<9)
+
+		d.s 0xF0309010 %L &mr
+	)
+
+	d.s 0xF0309010 %L 0x0a000400 //DirectCmd - ZQCL
+
+	if &DDR3_LOGICAL_CHIP_NUM==2
+	(
+		d.s 0xF0309010 %L 0x08000000|0x00100000 //DirectCmd - XSR
+	
+		//after 500 us
+		d.s 0xF0309010 %L 0x07000000|0x00100000 //DirectCmd - NOP
+
+		//d.s 0xF0309010 %L 0x00020000|0x00100000 //DirectCmd - MRS : MR2
+		(
+			&mr = 0x00020000
+
+			if &DDR3_CLK*2<=0x320 //DDR3_800
+				&mr=&mr|(0<<3)
+			else if &DDR3_CLK*2<=0x42A //DDR3_1066
+				&mr=&mr|(1<<3)
+			else if &DDR3_CLK*2<=0x535 //DDR3_1333
+				&mr=&mr|(2<<3)
+			else if &DDR3_CLK*2<=0x640 //DDR3_1600
+				&mr=&mr|(3<<3)
+
+			d.s 0xF0309010 %L &mr|0x00100000
+		)
+
+		d.s 0xF0309010 %L 0x00030000|0x00100000 //DirectCmd - MRS : MR3
+		d.s 0xF0309010 %L 0x00010000|(&DDR3_AL<<3)|(&DDR3_ODT<<2)|(&DDR3_DIC<<1)|0x00100000 //DirectCmd - MRS : MR1 : DLL(enable)
+		
+		//d.s 0xF0309010 %L 0x00001420|0x00100000 //DirectCmd - MRS : MR0 : DLLPRE(off), WR(), DLL Reset(Yes), MODE(0), CL(), BL(8)
+		(
+			&mr=&DDR3_BURST_LEN|(&DDR3_READ_BURST_TYPE<<3)|(1<<0xC);
+
+			if &DDR3_CL<5
+				&mr=&mr|((5-4)<<4)
+			else if &DDR3_CL>0xB
+				&mr=&mr|((0xB-4)<<4)
+			else
+				&mr=&mr|((&DDR3_CL-4)<<4)
+
+			if &tCK>=0x9C4 // 2.5 ns
+				&mr=&mr|(1<<9)
+			else if tCK>=0x753 // 1.875 ns
+				&mr=&mr|(2<<9)
+			else if tCK>=0x5DC // 1.5 ns
+				&mr=&mr|(3<<9)
+			else if tCK>=0x4E2 // 1.25 ns
+				&mr=&mr|(4<<9)
+			else if tCK>=0x3A7 // 0.935 ns
+				&mr=&mr|(5<<9)
+			else
+				&mr=&mr|(6<<9)
+
+			d.s 0xF0309010 %L &mr|0x00100000
+		)
+
+		d.s 0xF0309010 %L 0x0a000400|0x00100000 //DirectCmd - ZQCL
+	)
+
+//--------------------------------------------------------------------------
+
+	d.s 0xF0309000 %L 0x60ff3030 //ConControl
+	d.s 0xF0303020 %L 0x0007010b //EMCCFG
+
+	if &DDR3_BANK_NUM==8
+	(
+		&i=0.
+		while &i!=0x44444444
+		(
+			&i=data.long(R:0xF0309208)
+			&i=&i&0xFFFFFFFF
+		)
+	)
+	else
+	(
+		&i=0.
+		while &i!=0x00004444
+		(
+			&i=data.long(R:0xF0309208)
+			&i=&i&0x0000FFFF
+		)
+	)
+
+	if &DDR3_LOGICAL_CHIP_NUM==2
+	(
+		if &DDR3_BANK_NUM==8
+		(
+			&i=0.
+			while &i!=0x44444444
+			(
+				&i=data.long(R:0xF030920C)
+				&i=&i&0xFFFFFFFF
+			)
+		)
+		else
+		(
+			&i=0.
+			while &i!=0x00004444
+			(
+				&i=data.long(R:0xF030920C)
+				&i=&i&0x0000FFFF
+			)
+		)
+	)
+
+//--------------------------------------------------------------------------
+

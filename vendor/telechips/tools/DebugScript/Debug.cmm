@@ -1,0 +1,245 @@
+//===========================================================================
+//
+//                       ANDROID TRACE32 CMM FILE
+//
+//                        EDIT HISTORY FOR MODULE
+//
+//---------------------------------------------------------------------------
+// version     who      history
+//---------------------------------------------------------------------------
+// 110407-1   Bruce     Create file
+//===========================================================================
+
+//---------------------------------------------------------------------------
+// Variable
+//---------------------------------------------------------------------------
+global &chipset
+
+//---------------------------------------------------------------------------
+// Set Environment !!
+//---------------------------------------------------------------------------
+
+&chipset="TCC88xx"
+&srcpath="Select location of source directory"
+&debugtarget="kernel"
+
+
+//----------------------------------------------------------
+
+//CMDPOS 0.0 0.0 135. 10.
+
+area.clear
+
+print ""
+print "==================================================="
+print "      TELECHIPS TRACE32 SCRIPT for ANDROID "
+print "==================================================="
+print ""
+
+
+//---------------------------------------------------------------------------
+// DIALOG
+//---------------------------------------------------------------------------
+WINPOS 5. 15. 44. 11. 0. 0. W001
+DIALOG
+(
+
+	HEADER "Kernel Debug Script"
+	icon ":mmu"
+
+	//-----------------------------------------------------
+	// Select target..
+	//-----------------------------------------------------
+
+	POS 1. 0. 18. 1.
+	DEBUG_SEL.1: choosebox "Bootloader Debugging" 
+	(
+		&debugtarget="bootloader"
+
+		dialog.enable BOOTSYMBOLPATH
+		dialog.enable BOOTSYMBOLBUTTON
+		dialog.enable SDRAM
+	)
+	POS 20. 0. 15. 1.
+	DEBUG_SEL.2: choosebox "Kernel Debugging" 
+	(
+		&debugtarget="kernel"
+
+		dialog.disable BOOTSYMBOLPATH
+		dialog.disable BOOTSYMBOLBUTTON
+		dialog.disable SDRAM
+	)
+
+	//-----------------------------------------------------
+	// Select chipset
+	//-----------------------------------------------------
+	POS 0. 1. 43. 0.
+	LINE ""
+
+	POS 1. 2. 8. 1.
+	TEXT "Chipset"
+
+	pos 13. 2. 10. 1.
+	CHIPSET: PULLDOWN "TCC88xx,TCC93xx,TCC89xx,TCC92xx,TCC892x"
+	(
+		&chipset=dialog.string(CHIPSET)
+	)
+
+	//-----------------------------------------------------
+	// KERNEL DIR
+	//-----------------------------------------------------
+	POS 1. 3.5 10. 1.
+	TEXT "Source Directory"
+
+	POS 13. 3.5 27. 1.
+	SOURCEPATH: EDIT "Select location of source directory" ""
+
+	POS 41. 3.5 2. 1.
+	BUTTON "..."
+	(
+		dialog.setdir SOURCEPATH *
+	)
+
+	//-----------------------------------------------------
+	// Bootloader Symbol Directory
+	//-----------------------------------------------------
+	POS 1. 5. 11. 1.
+	TEXT "Bootloader Symbol"
+
+	POS 13. 5. 27. 1.
+	BOOTSYMBOLPATH: EDIT "Select a symbol file of the bootloader" ""
+
+	POS 41. 5. 2. 1.
+	BOOTSYMBOLBUTTON: BUTTON "..."
+	(
+		dialog.setfile BOOTSYMBOLPATH *
+	)
+
+	//-----------------------------------------------------
+	// SDRAM
+	//-----------------------------------------------------
+	POS 1. 6.5 8. 1.
+	TEXT "SDRAM"
+
+	pos 13. 6.5 30. 1.
+	SDRAM: PULLDOWN "TCC88xx_CT83486C1_x2,TCC88xx_HXB18T2G160AF_x2,TCC88xx_HY5PS1G1631CFPS6_x2,TCC88xx_HY5PS1G1631CFPS6_x4,TCC88xx_HY5PS1G831CFPS6_x4,TCC88xx_MT47H256M8EB25E_x4,TCC88xx_K4T1G164QE_HCF7_x4,TCC88xx_H5TQ2G63BFR_H9C_x2,TCC88xx_H5TQ2G83BFA_H9C_x4,TCC88xx_K4B1G1646E_HCH9_x2,TCC88xx_K4B2G1646C_HCK0_x2,TCC93xx_HXB18T2G160AF_x2,TCC93xx_HY5PS1G1631CFPS6_x2,TCC93xx_HY5PS1G1631CFPS6_x4,TCC93xx_HY5PS1G831CFPS6_x4,TCC93xx_H5TQ2G63BFR_H9C_x2,TCC93xx_K4B1G1646E_HCH9_x2,TCC93xx_K4B2G1646C_HCK0_x2,TCC89xx_HY5PS1G1631CFPS6_x2,TCC92xx_HY5PS1G1631CFPS6_x2,TCC892x_HY5PS1G831CFPS6_x4"
+	(
+		&sdram=dialog.string(SDRAM)
+	)
+
+	//-----------------------------------------------------
+	// Test
+	//-----------------------------------------------------
+//	POS 30. 2. 7. 1.0
+//	testbt: BUTTON "test"
+//	(
+//		do core\core.cmm &chipset
+//		SYStem.MODE ATTACH
+//		if run()
+//			Break
+//		if data.long(R:0x3000008C)==0x10004450
+//			print "old chip"
+//		else
+//			print "new chip"
+//		&test1=(0xE38<<0x14)|(0x2<<0x11)|(0x5<<0xE)|(0x2<<0xB)|(0x5<<8)|(0x3<<4)|(0x0<<2)|(0x0<<1)|(0x0<<0)
+//		print "&test1"
+//		&test2=0xa/3
+//		print "&test2"
+//		if &test1<=&test2
+//			print "test2 is bigger than test1"
+//		else
+//			print "test1 is bigger than test2"
+//		print "&test1"
+//		&test1=&test1|0x1
+//		print "&test1"
+//		&test1=&test1&0x1
+//		print "&test1"
+//	)
+
+	//-----------------------------------------------------
+	// Debugging
+	//-----------------------------------------------------
+	//POS 0. 6. 43. 0.
+	//LINE ""
+
+	POS 1. 8. 42. 2.0
+	CALL_DEBUG_START: BUTTON " Debug Start "
+	(
+		do core\core.cmm &chipset
+
+		SYStem.MODE ATTACH
+		if run()
+			Break
+
+		//extract debug information ..
+		&srcpath=dialog.string(SOURCEPATH)
+		&bootloaderpath="&srcpath"+"\bootable\bootloader\lk"
+		&kernelpath="&srcpath"+"\kernel"
+		&bootloadersymbol=dialog.string(BOOTSYMBOLPATH)
+		&sdram=dialog.string(SDRAM)
+
+		print "source path : &srcpath"
+		print "bootloader path : &bootloaderpath"
+		print "kernel path : &kernelpath"
+		print "bootloader symbol : &bootloadersymbol"
+		print "sdram : &sdram"
+		do environment\save.cmm "chipset.sav" "srcpath.sav" "bootloadersymbol.sav" "sdram.sav"
+
+		print "Loading Symbol .."
+
+		if dialog.boolean(DEBUG_SEL.1)
+		(
+			do sdram\sdram.cmm &sdram
+
+			Data.LOAD.Elf "&bootloadersymbol" /RELPATH /PATH &bootloaderpath /GNU /ANYSYM
+			
+			break.delete /ALL
+			break.set kmain /onchip
+		 	Go
+		 	wait !run()
+		 	B.d kmain
+
+			if "&chipset"=="TCC892x"
+			(
+				PER.S C15:0x111 %LONG 0x3
+			)
+
+		)
+		else
+		(
+			Data.LOAD.Elf "&kernelpath\vmlinux" /RELPATH /PATH "&kernelpath" /macro /gnu /cpp /anysym /nocode
+
+			screen.always
+	
+			break.delete /ALL
+		 	B.s start_kernel /onchip
+		 	Go
+		 	wait !run()
+		 	B.d start_kernel
+
+			if "&chipset"=="TCC892x"
+			(
+				PER.S C15:0x111 %LONG 0x3
+			)
+
+		 	print "Initializing Linux support..."
+		 	TASK.CONFIG ~~\demo\arm\kernel\linux\linux.t32          ; loads Linux awareness (linux.t32)
+		 	MENU.ReProgram ~~\demo\arm\kernel\linux\linux.men       ; loads Linux menu (linux.men)
+		 	HELP.FILTER.Add rtoslinux  ; add linux awareness manual to help filter
+		 	sYmbol.AutoLoad.CHECKLINUX "do "+os.ppd()+"/autoload "
+		 	GROUP.Create "kernel" 0xc0000000--0xffffffff	; Group kernel area to be displayed with red bar
+		)
+	)
+)
+
+dialog.set DEBUG_SEL.2
+dialog.disable BOOTSYMBOLPATH
+dialog.disable BOOTSYMBOLBUTTON
+dialog.disable SDRAM
+
+do environment\load.cmm "chipset.sav" "srcpath.sav" "bootloadersymbol.sav" "sdram.sav"
+
+ENDDO
+//----------------------------------------------------------
+
+

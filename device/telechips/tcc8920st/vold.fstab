@@ -1,0 +1,12 @@
+# Primary(NAND)
+dev_mount sdcard /mnt/sdcard all /devices/virtual/block/ndda /devices/platform/tcc-sdhc /devices/platform/dwc_otg /devices/platform/tcc-ohci /devices/platform/tcc-ehci
+
+# External SD card
+dev_mount ext_sd /mnt/ext_sd all /devices/platform/tcc-sdhc
+
+# External USB storage
+dev_mount usb_sda /mnt/usb_sda1 all /devices/platform/dwc_otg /devices/platform/tcc-ohci /devices/platform/tcc-ehci
+dev_mount usb_sdb /mnt/usb_sdb1 all /devices/platform/dwc_otg /devices/platform/tcc-ohci /devices/platform/tcc-ehci
+
+# Network File System
+net_mount nfs /mnt/nfs 

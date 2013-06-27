@@ -1,0 +1,18 @@
+<div id="footer"> 
+  <div id="copyright">
+  </div> 
+ 
+  <div id="footerLeft">     
+    <p> 
+      <a href="http://www.android.com/terms.html">Site Terms of Service</a> -
+      <a href="http://www.android.com/privacy.html">Privacy Policy</a> 
+    </p> 
+  </div>
+
+  <div id="footerRight">
+    <p>
+      <a href="#top">Go to Top</a>
+    </p>
+  </div>
+</div> 
+

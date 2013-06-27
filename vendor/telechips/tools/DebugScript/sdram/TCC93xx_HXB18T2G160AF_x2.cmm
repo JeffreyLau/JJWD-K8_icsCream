@@ -1,0 +1,335 @@
+
+//---------------------------------------------------------------------------
+// DDR2 Configuation
+
+&DDR2_PHYSICAL_CHIP_NUM=2
+&DDR2_LOGICAL_CHIP_NUM=1
+&DDR2_CL=5
+&DDR2_BURST_LEN=2 //BL_4
+&DDR2_READ_BURST_TYPE=0 //RBT_SEQUENTIAL
+&DDR2_EA_MB_SIZE=0x100
+&DDR2_TOTAL_MB_SIZE=0x200
+&DDR2_ROWBITS=0xe
+&DDR2_COLBITS=0xa
+&DDR2_BANK_BITS=3
+&DDR2_BANK_NUM=8
+&DDR2_PHYSICAL_DATA_BITS=0x10
+&DDR2_LOGICAL_DATA_BITS=0x20
+
+//---------------------------------------------------------------------------
+// DDR2 Access Timing Parameters
+
+&DDR2_tRFC_ps=0x2AB98
+&DDR2_tREFI_ps=0x7704C0
+&DDR2_tRRD_ps=0x2710
+&DDR2_tRRD_ck=1
+&DDR2_tRAS_ps=0xAFC8
+&DDR2_tRAS_ck=1
+&DDR2_tRC_ps=0xE09C
+&DDR2_tRC_ck=1
+&DDR2_tRCD_ps=0x30D4
+&DDR2_tRCD_ck=1
+&DDR2_tRP_ps=0x30D4
+&DDR2_tRP_ck=1
+&DDR2_tWTR_ps=0x1D4C
+&DDR2_tWTR_ck=2
+&DDR2_tWR_ps=0x3A98
+&DDR2_tWR_ck=1
+&DDR2_tRTP_ps=0x1D4C
+&DDR2_tRTP_ck=2
+&DDR2_tFAW_ps=0xAFC8
+&DDR2_tFAW_ck=1
+&DDR2_tXSR_ck=0xC8
+&DDR2_tXP_ck=2
+&DDR2_tCKE_ck=3
+&DDR2_tMRD_ck=2
+
+//---------------------------------------------------------------------------
+// DDR2 Driving Strength
+
+&MEMCTRL_DDS=5
+&MEMCTRL_TERM=2
+&DDR2_DIC=1
+&DDR2_ODT=1
+
+//---------------------------------------------------------------------------
+
+&DDR2_CLK=0x12C //300
+&DDR2_ODT_ENABLE_MIN_FREQ=0xc8	//200
+&PHYZQCTRL=(0xE38<<0x14)|(0x2<<0x11)|(0x5<<0xE)|(&MEMCTRL_TERM<<0xB)|(&MEMCTRL_DDS<<8)|(0x3<<4)|(0x0<<2)|(0x0<<1)|(0x0<<0) //drvstr : 0x5, odt : 60 ohm
+&tCK=(0xF4240/&DDR2_CLK)
+
+//---------------------------------------------------------------------------
+
+local &i &j
+
+//--------------------------------------------------------------------------
+//Change to config mode
+	d.s 0xB0303020 %L 0x0005010A //EMCCFG
+
+	&i=0.
+	while &i<20.
+	(
+	    &i=&i+1
+	)
+
+//--------------------------------------------------------------------------
+//Clock setting..
+
+	//Set CLKDIVC0,CLKDIVC1. But it is diabled.
+	d.s 0xB0500048 %L 0x01010101;
+	d.s 0xB050004C %L 0x01010101;
+	d.s 0xB0500050 %L 0x01010101;
+
+	//cpu bus - DirectXIN, Synchronous clock mode 
+	d.s 0xB0500000 %L 0x002ffff4;
+	//mem bus - DirectXIN/2(It is for asynchronous clock mode) 
+	d.s 0xB0500008 %L 0x002f1f14;
+	//io bus - DirectXIN/2
+	d.s 0xB0500010 %L 0x002f1f14;
+	//smu bus
+	d.s 0xB050001C %L 0x002f1f14;
+	
+	//MBUSCTRL - set asynchronous clock mode! cpubus/2
+	d.s 0xB050002C %L 0xffff0101;
+
+	//PLL0 - 800MHz
+	d.s 0xB0500030 %L 0x41019003;
+	d.s 0xB0500030 %L 0xC1019003;
+
+	//PLL5 - 600MHz
+	d.s 0xB0500044 %L 0x40009603;
+	d.s 0xB0500044 %L 0xC0009603;
+
+	//PLL2 - 468MHz
+	d.s 0xB0500038 %L 0x4201D403;
+	d.s 0xB0500038 %L 0xC201D403;
+
+	&i=0.
+	while &i<20.
+	(
+		&i=&i+1
+	)
+
+	//cpu bus - PLL0
+	d.s 0xB0500000 %L 0x002EEEE0;
+	//mem bus - PLL5/2 = 300MHz
+	d.s 0xB0500008 %L 0x00200019;
+	//io bus - PLL2, 468MHz/3 = 156MHz
+	d.s 0xB0500010 %L 0x00200022;
+
+	&i=0.
+	while &i<20.
+	(
+		&i=&i+1
+	)
+
+//--------------------------------------------------------------------------
+// Controller setting
+
+	//phy configuration
+	d.s 0xB0303024 %L 0x200;//PHYCFG
+
+	//PhyZQControl
+	if &DDR2_CLK>=&DDR2_ODT_ENABLE_MIN_FREQ
+	(
+		d.s 0xB0305044 %L &PHYZQCTRL
+		d.s 0xB0305044 %L &PHYZQCTRL|0x2
+	)
+	else
+	(
+		d.s 0xB0305044 %L &PHYZQCTRL|0x1
+		d.s 0xB0305044 %L &PHYZQCTRL|0x3
+	)
+
+	// Wait until ZQ End
+	&i=0.
+	&j=0xB0305040
+	while &i==0. 	// Wait until ZQ End
+	(
+    	&i=data.long(R:&j)
+    	&i=&i&0x10000
+	)
+
+	if &DDR2_CLK>=&DDR2_ODT_ENABLE_MIN_FREQ
+	(
+		d.s 0xB0305044 %L &PHYZQCTRL
+	)
+	else
+	(
+		d.s 0xB0305044 %L &PHYZQCTRL|0x1
+	)
+
+	d.s 0xB0305018 %L 0x0010100A //PHY Control0
+	d.s 0xB030501C %L 0xE0000086 //PHY Control1
+	d.s 0xB0305020 %L 0x00000000 //PHY Control2
+	d.s 0xB0305024 %L 0x00000000 //PHY Control3
+	d.s 0xB0305018 %L 0x0010100B //PHY Control0
+
+	&i=0.
+	&j=0xB0305040
+	while &i==0. 	// Wait until FLOCK == 1
+	(
+	    &i=data.long(R:&j)
+	    &i=&i&0x07
+	)
+
+	//PHY Control1
+	d.s 0xB030501C %L 0xE000008E //resync = 1
+	d.s 0xB030501C %L 0xE0000086 //resync = 0
+	
+//--------------------------------------------------------------------------
+// Memory config
+
+	//Enable Out of order scheduling
+	d.s 0xB0305000 %L 0x30FF2018
+
+	//MEMCTRL
+	d.s 0xB0305004 %L (0x2<<0x14)|((&DDR2_LOGICAL_CHIP_NUM-1)<<0x10)|((&DDR2_LOGICAL_DATA_BITS/0x10)<<0xC)|(0x4<<8)|(0x0<<6)|(0x0<<5)|(0x0<<4)|(0x0<<2)|(0x0<<1)|(0x0)
+
+	//MEMCHIP0
+	d.s 0xB0305008 %L (0x40<<0x18)|((0xFF-(&DDR2_TOTAL_MB_SIZE/(&DDR2_LOGICAL_CHIP_NUM*0x10)-1))<<0x10)|(0x1<<0xC)|((&DDR2_COLBITS-7)<<8)|((&DDR2_ROWBITS-0xC)<<4)|&DDR2_BANK_BITS
+
+	//MEMCHIP1
+	if &DDR2_LOGICAL_CHIP_NUM==2
+	d.s 0xB030500C %L ((0x40+&DDR2_TOTAL_MB_SIZE/(&DDR2_LOGICAL_CHIP_NUM*0x10))<<0x18)|((0xFF-(&DDR2_TOTAL_MB_SIZE/(&DDR2_LOGICAL_CHIP_NUM*0x10)-1))<<0x10)|(0x1<<0xC)|((&DDR2_COLBITS-7)<<8)|((&DDR2_ROWBITS-0xC)<<4)|&DDR2_BANK_BITS
+
+//--------------------------------------------------------------------------
+
+	d.s 0xB0305014 %L 0x0 //PRECONFIG
+	d.s 0xB0305028 %L 0xFFFF00FF //PRECONFIG
+
+//--------------------------------------------------------------------------
+// Timing parameter setting.
+
+	//T_REFI
+	d.s 0xB0305030 %L ((&DDR2_tREFI_ps+&tCK-1)/&tCK)
+
+	//TROW
+	d.s 0xB0305034 %L ((&DDR2_tRAS_ps+&tCK-1)/&tCK)|(((&DDR2_tRC_ps+&tCK-1)/&tCK)<<6)|(&DDR2_CL<<0xC)|(&DDR2_CL<<0x10)|(((&DDR2_tRRD_ps+&tCK-1)/&tCK)<<0x14)|(((&DDR2_tRFC_ps+&tCK-1)/&tCK)<<0x18)
+
+	&rtp=((&DDR2_tRTP_ps+&tCK-1)/&tCK)
+	if &rtp<&DDR2_tRTP_ck
+		&rtp=&DDR2_tRTP_ck
+
+	&wtr=((&DDR2_tWTR_ps+&tCK-1)/&tCK)
+	if &wtr<&DDR2_tWTR_ck
+		&wtr=&DDR2_tWTR_ck
+
+	//TDATA
+	d.s 0xB0305038 %L &DDR2_CL|((&DDR2_CL-1)<<8)|(&DDR2_CL<<0x10)|(&rtp<<0x14)|(((&DDR2_tWR_ps+&tCK-1)/&tCK)<<0x18)|(&wtr<<0x1C)
+
+	//TPOWER
+	d.s 0xB030503C %L &DDR2_tMRD_ck|(&DDR2_tCKE_ck<<4)|(&DDR2_tXP_ck<<8)|(&DDR2_tXSR_ck<<0x10)|(((&DDR2_tFAW_ps+&tCK-1)/&tCK)<<0x18)
+
+//--------------------------------------------------------------------------
+// MRS Setting
+
+	//Direct Command
+	d.s 0xB0305010 %L 0x07000000;//NOP
+	d.s 0xB0305010 %L 0x01000000;//precharge all
+	d.s 0xB0305010 %L 0x00020000;
+	d.s 0xB0305010 %L 0x00030000;
+	d.s 0xB0305010 %L 0x00010000;
+	d.s 0xB0305010 %L 0x00000100;
+	d.s 0xB0305010 %L 0x01000000;//precharge all
+	d.s 0xB0305010 %L 0x05000000;//AREF
+	d.s 0xB0305010 %L 0x05000000;//AREF
+	d.s 0xB0305010 %L 0x05000000;//AREF
+	d.s 0xB0305010 %L 0x00000000;	// DLL reset release.
+	d.s 0xB0305010 %L (&DDR2_BURST_LEN|(&DDR2_READ_BURST_TYPE<<3)|(&DDR2_CL<<4)|(((&DDR2_tWR_ps+&tCK-1)/&tCK)<<0x9))
+	&i=0.
+	while &i<20.
+	(
+	    &i=&i+1
+	)
+	d.s 0xB0305010 %L 0x00010380; // OCD Calibration default
+	&i=0.
+	while &i<20.
+	(
+	    &i=&i+1
+	)
+	if (&DDR2_CLK>=&DDR2_ODT_ENABLE_MIN_FREQ)
+		d.s 0xB0305010 %L 0x00010000|(&DDR2_ODT<<2)|(&DDR2_DIC<<1)
+	else
+		d.s 0xB0305010 %L 0x00010000|(&DDR2_DIC<<1)
+
+	if &DDR2_LOGICAL_CHIP_NUM==2
+	(
+		d.s 0xB0305010 %L 0x07000000|0x00100000;//NOP
+		d.s 0xB0305010 %L 0x01000000|0x00100000;//precharge all
+		d.s 0xB0305010 %L 0x00020000|0x00100000;
+		d.s 0xB0305010 %L 0x00030000|0x00100000;
+		d.s 0xB0305010 %L 0x00010000|0x00100000;
+		d.s 0xB0305010 %L 0x00000100|0x00100000;
+		d.s 0xB0305010 %L 0x01000000|0x00100000;//precharge all
+		d.s 0xB0305010 %L 0x05000000|0x00100000;//AREF
+		d.s 0xB0305010 %L 0x05000000|0x00100000;//AREF
+		d.s 0xB0305010 %L 0x05000000|0x00100000;//AREF
+		d.s 0xB0305010 %L 0x00000000|0x00100000;	// DLL reset release.
+		d.s 0xB0305010 %L (&DDR2_BURST_LEN|(&DDR2_READ_BURST_TYPE<<3)|(&DDR2_CL<<4)|(((&DDR2_tWR_ps+&tCK-1)/&tCK)<<0x9)|0x00100000)
+		&i=0.
+		while &i<20.
+		(
+		    &i=&i+1
+		)
+		d.s 0xB0305010 %L 0x00010380|0x00100000; // OCD Calibration default
+		&i=0.
+		while &i<20.
+		(
+		    &i=&i+1
+		)
+		if (&DDR2_CLK>=&DDR2_ODT_ENABLE_MIN_FREQ)
+			d.s 0xB0305010 %L 0x00010000|(&DDR2_ODT<<2)|(&DDR2_DIC<<1)|0x00100000;
+		else
+			d.s 0xB0305010 %L 0x00010000|(&DDR2_DIC<<1)|0x00100000;
+	)
+
+//--------------------------------------------------------------------------
+
+	d.s 0xB0303020 %L 0x0007010A //EMCCFG
+	d.s 0xB0305000 %L 0x30FF2038
+
+	if &DDR2_BANK_NUM==8
+	(
+		&i=0.
+		while &i!=0x44444444
+		(
+			&i=data.long(R:0xB0305048)
+			&i=&i&0xFFFFFFFF
+		)
+	)
+	else
+	(
+		&i=0.
+		while &i!=0x00004444
+		(
+			&i=data.long(R:0xB0305048)
+			&i=&i&0x0000FFFF
+		)
+	)
+
+	if &DDR2_LOGICAL_CHIP_NUM==2
+	(
+		if &DDR2_BANK_NUM==8
+		(
+			&i=0.
+			while &i!=0x44444444
+			(
+				&i=data.long(R:0xB030504C)
+				&i=&i&0xFFFFFFFF
+			)
+		)
+		else
+		(
+			&i=0.
+			while &i!=0x00004444
+			(
+				&i=data.long(R:0xB030504C)
+				&i=&i&0x0000FFFF
+			)
+		)
+	)
+
+//--------------------------------------------------------------------------
+

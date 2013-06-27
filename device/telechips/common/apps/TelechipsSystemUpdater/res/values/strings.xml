@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="service_label">System Updater</string>
+    <string name="system_update_activity_name">System updates</string>
+    <string name="no_update_content_text">Your system is currently up to date.</string>
+    <string name="scheduled_check">Scheduled check</string>
+    <string name="scheduled_check_summary">Go online and check for updates according to schedule from server</string>
+    <string name="your_system_is_up_to_date">Your system is currently up to date.</string>
+    <string name="install_system_update">Install system update</string>
+    <string name="install_system_update_summary">Install system update from Internal Storage or External storage</string>
+    <string name="install_dialog_label">System update</string>
+    <string name="install_dialog_message">A system update is ready to install. Your device will restart and install the update. Please do not turn off your device during installation.</string>
+    <string name="install_dialog_now_button">Install now</string>
+    <string name="install_dialog_later_button">Install later</string>
+    <string name="check_now">Check now</string>
+    <string name="download">Download</string>
+    <string name="update_available_notification_title">System update available</string>
+    <string name="update_available_notification_message">Select to view update details.</string>
+    <string name="downloading_notification_title">Downloading system update</string>
+    <string name="url_is_not_specified">The update URL is not specified</string>
+    <string name="cannot_check_update">Can\'t check the system updates</string>
+</resources>

@@ -1,0 +1,134 @@
+import init.m801_88.fs.rc
+import init.m801_88.usb.rc
+import init.m801_88.wifi.rc
+
+on early-init
+    export EXTERNAL_STORAGE /mnt/sdcard
+    export EXTERNAL_SD_STORAGE /mnt/ext_sd
+    export EXTERNAL_PRIMARY_STORAGE /mnt/sdcard
+    mkdir /mnt/usb_sda1 0000 system system
+    mkdir /mnt/usb_sdb1 0000 system system
+    mkdir /mnt/sdcard 0000 system system
+    mkdir /mnt/ext_sd 0000 system system
+    # for backwards compatibility
+    symlink /mnt/sdcard /sdcard
+
+on post-fs-data
+    mkdir /data/misc/wifi 0770 wifi wifi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    chown dhcp dhcp /data/misc/dhcp
+
+    setprop vold.post_fs_data_done 1
+
+# change permission for graphics node
+	chmod 0666 /dev/graphics/fb0
+
+# change permission for gps uart  # tcc-uart => ttyTCC3
+    setprop ro.kernel.android.gps ttyTCC3
+            chmod 0666 /dev/ttyTCC3
+            chmod 0666 /dev/gps_gpio
+on boot
+    insmod /lib/modules/ufsd.ko
+#    insmod /system/lib/modules/vpu_manager.ko
+#    insmod /system/lib/modules/vpu_decoder.ko
+#    insmod /system/lib/modules/vpu_decoder_ext.ko
+#    insmod /system/lib/modules/vpu_encoder.ko
+#    insmod /lib/modules/ehci-hcd.ko
+#    insmod /lib/modules/ohci-hcd.ko
+
+    mount debugfs /sys/kernel/debug /sys/kernel/debug
+
+service quickboot /system/bin/quickboot
+    class core
+    socket quickboot stream 0660 root system
+
+#service wpa_supplicant /system/bin/wpa_supplicant -Dwext -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf
+#    disabled
+#    oneshot
+
+#service hostapd /system/bin/hostapd_wps /data/misc/wifi/hostapd.conf
+#    socket hostapd_wlap0 dgram 660 root wifi
+#    user root
+#    group wifi
+#    oneshot
+#    disabled
+
+#service dhcpcd_wlan0 /system/bin/dhcpcd -ABKL
+#    disabled
+#    oneshot
+
+service dhcpcd_eth0 /system/bin/dhcpcd -ABKL
+    disabled
+    oneshot
+
+service dhcpcd_bnep0 /system/bin/dhcpcd -ABKL
+    disabled
+    oneshot
+
+service iprenew_bnep0 /system/bin/dhcpcd -n
+        class main
+        disabled
+        oneshot
+
+#service wlan_tool /system/bin/wlan_tool
+#    user root
+#    group root
+#    disabled
+#    oneshot
+
+# AR6002
+#service abtfilt /system/bin/abtfilt -c -d -z -n
+#   disabled
+#   oneshot
+
+#Special for the ugly AR6003 code
+#service abtfilt1 /system/bin/abtfilt -a -d -v -z -s
+#    disabled
+#    oneshot
+
+# Atheros --- 
+
+# for CSR Module
+#service bccmd /system/bin/bccmd -t bcsp -d /dev/ttyTCC1 -b 115200  psload /system/key_921600.psr
+service bccmd /system/bin/bccmd -t bcsp -d /dev/ttyTCC1 -b 115200 psload /system/key_3000000.psr
+    class main
+    disabled
+    oneshot
+
+# for BRCM Module
+#service bcmtool /system/xbin/bcmtool /dev/ttyTCC1 -FILE=/system/BCM4325D0.hcd -ADDR=/system/sample.bdaddr -BAUD=921600
+#service bcmtool /system/xbin/bcmtool /dev/ttyTCC1 -FILE=/system/BCM4325D0.hcd -ADDR=/system/sample.bdaddr -BAUD=3000000 -SCO -SETSCO=0,1,0,1,1,0,0,3,3,0 -LP
+#   disabled
+#   oneshot
+
+#service hciattach /system/bin/hciattach -n -s 3000000 /dev/ttyTCC1 any 3000000 flow
+#service hciattach /system/bin/hciattach -n -s 921600 /dev/ttyTCC1 bcsp 921600
+service hciattach /system/bin/hciattach -n -s 3000000 /dev/ttyTCC1 bcsp 3000000
+#service hciattach /system/bin/hciattach -n -s 115200 /dev/ttyTCC1 rda 3000000 flow
+#service hciattach /system/bin/hciattach -n -s 115200 /dev/ttyTCC1 ath3k 3000000 flow
+#   user bluetooth
+#   group bluetooth net_bt_admin
+    class main
+    disabled
+#   oneshot
+
+#compass daemon
+service akmd8975 /system/bin/akmd8975
+    user compass
+    group compass misc input
+    disabled
+
+on property:hw.sensor.ak8975=1
+    start akmd8975
+
+on property:dhcp.bnep0.result=""
+    stop dhcpcd
+
+#for telechips broadcasting service
+service tcc_dxb_service /system/bin/tcc_dxb_service
+    class main
+    user root
+    group graphics
+

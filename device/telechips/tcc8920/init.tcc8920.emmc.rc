@@ -1,0 +1,15 @@
+on fs
+# mount emmc ext4 file system
+    mount ext4 /dev/block/mmcblk0p2 /system wait ro
+    mount ext4 /dev/block/mmcblk0p3 /data wait noatime nosuid nodev nomblk_io_submit,errors=panic
+    mount ext4 /dev/block/mmcblk0p5 /cache wait noatime nosuid nodev nomblk_io_submit,errors=panic
+
+on boot
+    setprop ro.crypto.keyfile.userdata /dev/block/mmcblock0pr3
+
+# create filesystems if necessary
+service setup_fs /system/bin/setup_fs mmcblk0p3 mmcblk0p5
+    class core
+    user root
+    group root
+    oneshot

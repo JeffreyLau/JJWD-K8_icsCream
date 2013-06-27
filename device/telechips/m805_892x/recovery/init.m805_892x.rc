@@ -1,0 +1,12 @@
+on init-start
+    # XXX: MTD kernel modules should be loaded before early init
+
+# NAND Version 7 Driver for recovery 
+    insmod /lib/modules/tcc_nand.ko
+    insmod /lib/modules/tcc_mtd.ko
+    insmod /lib/modules/tcc_ndd.ko
+
+# NAND Version 8 Driver for recovery 
+    insmod /lib/modules/tcc_nand_v8.ko
+
+    insmod /lib/modules/ufsd.ko

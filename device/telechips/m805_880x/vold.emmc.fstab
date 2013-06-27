@@ -1,0 +1,9 @@
+# Internal SD card
+dev_mount sdcard /mnt/sdcard 11 /devices/platform/tcc-sdhc0
+
+# External SD card
+dev_mount ext_sd /mnt/ext_sd auto /devices/platform/tcc-sdhc1
+
+# External USB storage
+dev_mount usb_sda /mnt/usb_sda1 all /devices/platform/dwc_otg /devices/platform/tcc-ohci /devices/platform/tcc-ehci
+dev_mount usb_sdb /mnt/usb_sdb1 all /devices/platform/dwc_otg /devices/platform/tcc-ohci /devices/platform/tcc-ehci

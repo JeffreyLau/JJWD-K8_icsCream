@@ -1,0 +1,12 @@
+#
+# system.prop for m805_892x
+# modify by jeffrey
+# Disable preload-class
+ro.telechips.no.preloadclass=1
+ro.telechips.no.preloadresources=1
+ro.telechips.flip.backgroundwindow =1
+ro.telechips.use.ldlight=1
+ro.telechips.use.jmlight=1
+ro.telechips.use.voluedownlight=1
+ro.telechips.use.volueuplight=1
+ro.telechips.use.voluemutelight=1

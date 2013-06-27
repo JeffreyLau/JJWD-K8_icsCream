@@ -1,0 +1,133 @@
+key 1   SOFT_LEFT
+key 2   SOFT_RIGHT
+key 3   HOME         WAKE_DROPPED
+key 4   BACK         WAKE_DROPPED
+key 5   CALL         WAKE_DROPPED
+key 7   0
+key 8   1
+key 9   2
+key 10  3
+key 11  4
+key 12  5
+key 13  6
+key 14  7
+key 15  8
+key 16  9
+key 17  STAR
+key 18  POUND
+key 19  DPAD_UP
+key 20  DPAD_DOWN
+key 21  DPAD_LEFT
+key 22  DPAD_RIGHT
+key 23  DPAD_CENTER
+key 24  VOLUME_UP
+key 25  VOLUME_DOWN
+key 26  POWER        WAKE
+key 27  CAMERA
+key 29  A
+key 30  B
+key 31  C
+key 32  D
+key 33  E
+key 34  F
+key 35  G
+key 36  H
+key 37  I
+key 38  J
+key 39  K
+key 40  L
+key 41  M
+key 42  N
+key 43  O
+key 44  P
+key 45  Q
+key 46  R
+key 47  S
+key 48  T
+key 49  U
+key 50  V
+key 51  W
+key 52  X
+key 53  Y
+key 54  Z
+key 55  COMMA
+key 56  PERIOD
+key 57  ALT_LEFT
+key 58  ALT_RIGHT
+key 59  SHIFT_LEFT
+key 60  SHIFT_RIGHT
+key 61  TAB
+key 62  SPACE
+key 64  EXPLORER
+key 66  ENTER
+key 67  DEL
+key 68  GRAVE
+key 69  MINUS
+key 70  EQUALS
+key 71  LEFT_BRACKET
+key 72  RIGHT_BRACKET
+key 73  BACKSLASH
+key 74  SEMICOLON
+key 75  APOSTROPHE
+key 76  SLASH
+key 77  AT
+key 80  FOCUS
+key 81  PLUS
+key 82  MENU        WAKE_DROPPED
+key 84  SEARCH      WAKE_DROPPED
+key 85  MEDIA_PLAY_PAUSE
+key 86  MEDIA_STOP
+key 87  MEDIA_NEXT
+key 88  MEDIA_PREVIOUS
+key 89  MEDIA_REWIND
+key 90  MEDIA_FAST_FORWARD
+key 91  VOLUME_MUTE
+key 92  ALT_LEFT
+key 93  ALT_RIGHT
+key 94  CAPTIONS
+key 95  MEDIA_PAUSE
+key 96  PAGE_UP
+key 97  PAGE_DOWN
+key 98  MEDIA_STOP
+key 99  TV          WAKE
+key 100 HOME        WAKE_DROPPED
+key 101 BACK        WAKE_DROPPED
+key 102 MENU
+key 103 INFO
+key 104 WINDOW
+key 105 GUIDE
+key 106 DVR
+key 107 MEDIA_REWIND
+key 108 MEDIA_PLAY_PAUSE
+key 109 MEDIA_FAST_FORWARD
+key 110 BOOKMARK
+key 111 CAPS_LOCK
+key 112 ESCAPE       WAKE_DROPPED
+key 113 SEARCH
+key 114 SEARCH
+key 115 ZOOM_IN
+key 116 ZOOM_OUT
+key 117 CHANNEL_UP
+key 118 CHANNEL_DOWN
+key 120 TV           WAKE
+key 121 DVR
+key 122 GUIDE
+key 123 MEDIA_PREVIOUS
+key 124 MEDIA_NEXT
+key 125 MEDIA_RECORD
+key 126 MEDIA_PLAY
+
+key 128 PROG_RED
+key 129 PROG_GREEN
+key 130 PROG_YELLOW
+key 131 PROG_BLUE
+key 134 STB_POWER         WAKE
+key 135 STB_INPUT
+key 137 TV_POWER          WAKE
+key 138 TV_INPUT
+key 139 AVR_POWER         WAKE
+key 140 AVR_INPUT
+
+key 142 MEDIA_EJECT
+
+key 145 SETTINGS

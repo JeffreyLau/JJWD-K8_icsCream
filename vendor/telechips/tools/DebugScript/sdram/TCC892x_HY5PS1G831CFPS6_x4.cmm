@@ -1,0 +1,342 @@
+//---------------------------------------------------------------------------
+// DDR2 Configuation
+
+&DDR2_PHYSICAL_CHIP_NUM=4
+&DDR2_LOGICAL_CHIP_NUM=1
+&DDR2_CL=6
+&DDR2_BURST_LEN=2 //BL_4
+&DDR2_READ_BURST_TYPE=0 //RBT_SEQUENTIAL
+&DDR2_EA_MB_SIZE=0x80
+&DDR2_TOTAL_MB_SIZE=0x200
+&DDR2_ROWBITS=0xe
+&DDR2_COLBITS=0xa
+&DDR2_BANK_BITS=3
+&DDR2_BANK_NUM=8
+&DDR2_PHYSICAL_DATA_BITS=0x10
+&DDR2_LOGICAL_DATA_BITS=0x20
+
+//---------------------------------------------------------------------------
+// DDR2 Access Timing Parameters
+
+&DDR2_tRFC_ps=0x1F20C
+&DDR2_tREFI_ps=0x7704C0
+&DDR2_tRRD_ps=0x1D4C
+&DDR2_tRRD_ck=1
+&DDR2_tRAS_ps=0xAFC8
+&DDR2_tRAS_ck=1
+&DDR2_tRC_ps=0xEA60
+&DDR2_tRC_ck=1
+&DDR2_tRCD_ps=0x3A98
+&DDR2_tRCD_ck=1
+&DDR2_tRP_ps=0x3A98
+&DDR2_tRP_ck=1
+&DDR2_tWTR_ps=0x1D4C
+&DDR2_tWTR_ck=2
+&DDR2_tWR_ps=0x3A98
+&DDR2_tWR_ck=1
+&DDR2_tRTP_ps=0x1D4C
+&DDR2_tRTP_ck=2
+&DDR2_tFAW_ps=0x88B8
+&DDR2_tFAW_ck=1
+&DDR2_tXSR_ck=0xC8
+&DDR2_tXP_ck=2
+&DDR2_tCKE_ck=3
+&DDR2_tMRD_ck=2
+
+//---------------------------------------------------------------------------
+// DDR2 Driving Strength
+
+&MEMCTRL_DDS=5
+&MEMCTRL_TERM=2
+&DDR2_DIC=1
+&DDR2_ODT=1
+
+//---------------------------------------------------------------------------
+
+&PLL5_VALUE=0x01012C03	// PLL5 : 600MHz for CPU
+//       210        250        280        300
+//PLL4   0x4201A403 0x4201F403 0x01011803 0x01012C03
+//CLK    0x000000D2 0x000000FA 0x00000118 0x0000012C
+&PLL4_VALUE=0x01012C03
+&DDR2_CLK=0x0000012C
+&DDR2_ODT_ENABLE_MIN_FREQ=0xc8	//200
+&PHYZQCTRL=(0xE38<<0x14)|(0x2<<0x11)|(0x5<<0xE)|(&MEMCTRL_TERM<<0xB)|(&MEMCTRL_DDS<<8)|(0x3<<4)|(0x0<<2)|(0x0<<1)|(0x0<<0) //drvstr : 0x5, odt : 60 ohm
+&tCK=(0xF4240/&DDR2_CLK)
+
+//---------------------------------------------------------------------------
+
+local &i &j
+
+//--------------------------------------------------------------------------
+//Change to config mode
+
+	//Miscellaneous Configuration : COMMON
+	//*(volatile unsigned long *)addr_mem(0x410020) &= ~Hw17; //creq2=0 : enter low power
+	&i=data.long(R:0x73410020)
+	&i=&i&0xFFFDFFFF
+	d.s 0x73410020 %L &i
+
+	//while((*(volatile unsigned long *)addr_mem(0x410020))&Hw24); //cack2==0 : wait for acknowledgement to request..
+	&i=1.
+	while &i!=0.
+	(
+		&i=data.long(R:0x73410020)
+		&i=&i&0x01000000
+	)
+
+//--------------------------------------------------------------------------
+//Clock setting..
+
+	d.s 0x74000000 %L 0x002ffff4 //cpu bus : XIN
+	d.s 0x74000004 %L 0x00200014 //mem bus : XIN/2 
+	d.s 0x74000010 %L 0x00200014 //io bus : XIN/2
+	d.s 0x74000020 %L 0x00200014 //smu bus : XIN/2
+	d.s 0x74000044 %L &PLL5_VALUE //pll5 for cpu
+	d.s 0x74000044 %L 0x80000000|&PLL5_VALUE
+	d.s 0x74000040 %L &PLL4_VALUE //pll4 for mem
+	d.s 0x74000040 %L 0x80000000|&PLL4_VALUE
+
+	&i=0.
+	while &i<20.
+	(
+		&i=&i+1
+	)
+	d.s 0x74000000 %L 0x002FFFF9  // cpu
+	d.s 0x74000004 %L 0x00200018  // mem bus
+	d.s 0x74000010 %L 0x00200039  // io bus
+	d.s 0x74000020 %L 0x00200039  // smu bus
+
+	&i=0.
+	while &i<20.
+	(
+		&i=&i+1
+	)
+
+	//Memory BUS Configuration : MBUSCFG - DRAM Clock ration control(Hw15) , Bus Clk : DRAM Clk(0=1:1, 1=1:2)
+	//*(volatile unsigned long *)addr_mem(0x810010) &= ~Hw15; //dclkr=0 : this is used for DDR3 only.
+	&i=data.long(R:0x73810010)
+	&i=&i&0xFFFF7FFF
+	d.s 0x73810010 %L &i
+
+//--------------------------------------------------------------------------
+// Controller setting
+
+	//PHY Mode contrl register (PHYMDCFG0)
+	d.s 0x73420400 %L (0<<0x15)|(0x1f<<0x10)|(0<<0xE)|((&DDR2_LOGICAL_CHIP_NUM-1)<<0xD)|(0<<4)|(1<<3)|(0) 
+
+	//PhyZQControl
+	if &DDR2_CLK>=&DDR2_ODT_ENABLE_MIN_FREQ
+	(
+		d.s 0x73430044 %L &PHYZQCTRL
+		d.s 0x73430044 %L &PHYZQCTRL|0x2
+	)
+	else
+	(
+		d.s 0x73430044 %L &PHYZQCTRL|0x1
+		d.s 0x73430044 %L &PHYZQCTRL|0x3
+	)
+
+	// Wait until ZQ End
+	&i=0.
+	&j=0x73430040
+	while &i==0. 	// Wait until ZQ End
+	(
+    	&i=data.long(R:&j)
+    	&i=&i&0x10000
+	)
+
+	if &DDR2_CLK>=&DDR2_ODT_ENABLE_MIN_FREQ
+	(
+		d.s 0x73430044 %L &PHYZQCTRL
+	)
+	else
+	(
+		d.s 0x73430044 %L &PHYZQCTRL|0x1
+	)
+
+	d.s 0x73430018 %L 0x0010100A //PHY Control0
+	d.s 0x7343001C %L 0xE0000086 //PHY Control1
+	d.s 0x73430020 %L 0x00000000 //PHY Control2
+	d.s 0x73430024 %L 0x00000000 //PHY Control3
+	d.s 0x73430018 %L 0x0010100B //PHY Control0
+
+	&i=0.
+	&j=0x73430040
+	while &i==0. 	// Wait until FLOCK == 1
+	(
+	    &i=data.long(R:&j)
+	    &i=&i&0x07
+	)
+
+	//PHY Control1
+	d.s 0x7343001C %L 0xE000008E //resync = 1
+	d.s 0x7343001C %L 0xE0000086 //resync = 0
+	
+//--------------------------------------------------------------------------
+// Memory config
+
+	//Enable Out of order scheduling
+	d.s 0x73430000 %L 0x30FF2018
+
+	//MEMCTRL
+	d.s 0x73430004 %L (0x2<<0x14)|((&DDR2_LOGICAL_CHIP_NUM-1)<<0x10)|((&DDR2_LOGICAL_DATA_BITS/0x10)<<0xC)|(0x4<<8)|(0x0<<6)|(0x0<<5)|(0x0<<4)|(0x0<<2)|(0x0<<1)|(0x0)
+
+	//MEMCHIP0
+	d.s 0x73430008 %L (0x80<<0x18)|((0xFF-(&DDR2_TOTAL_MB_SIZE/(&DDR2_LOGICAL_CHIP_NUM*0x10)-1))<<0x10)|(0x1<<0xC)|((&DDR2_COLBITS-7)<<8)|((&DDR2_ROWBITS-0xC)<<4)|&DDR2_BANK_BITS
+
+	//MEMCHIP1
+	if &DDR2_LOGICAL_CHIP_NUM==2
+	d.s 0x7343000C %L ((0x80+&DDR2_TOTAL_MB_SIZE/(&DDR2_LOGICAL_CHIP_NUM*0x10))<<0x18)|((0xFF-(&DDR2_TOTAL_MB_SIZE/(&DDR2_LOGICAL_CHIP_NUM*0x10)-1))<<0x10)|(0x1<<0xC)|((&DDR2_COLBITS-7)<<8)|((&DDR2_ROWBITS-0xC)<<4)|&DDR2_BANK_BITS
+
+//--------------------------------------------------------------------------
+
+	d.s 0x73430014 %L 0x0 //PRECONFIG
+	d.s 0x73430028 %L 0xFFFF00FF //PRECONFIG
+
+//--------------------------------------------------------------------------
+// Timing parameter setting.
+
+	//T_REFI
+	d.s 0x73430030 %L ((&DDR2_tREFI_ps+&tCK-1)/&tCK)
+
+	//TROW
+	d.s 0x73430034 %L ((&DDR2_tRAS_ps+&tCK-1)/&tCK)|(((&DDR2_tRC_ps+&tCK-1)/&tCK)<<6)|(&DDR2_CL<<0xC)|(&DDR2_CL<<0x10)|(((&DDR2_tRRD_ps+&tCK-1)/&tCK)<<0x14)|(((&DDR2_tRFC_ps+&tCK-1)/&tCK)<<0x18)
+
+	&rtp=((&DDR2_tRTP_ps+&tCK-1)/&tCK)
+	if &rtp<&DDR2_tRTP_ck
+		&rtp=&DDR2_tRTP_ck
+
+	&wtr=((&DDR2_tWTR_ps+&tCK-1)/&tCK)
+	if &wtr<&DDR2_tWTR_ck
+		&wtr=&DDR2_tWTR_ck
+
+	//TDATA
+	d.s 0x73430038 %L &DDR2_CL|((&DDR2_CL-1)<<8)|(&DDR2_CL<<0x10)|(&rtp<<0x14)|(((&DDR2_tWR_ps+&tCK-1)/&tCK)<<0x18)|(&wtr<<0x1C)
+
+	//TPOWER
+	d.s 0x7343003C %L &DDR2_tMRD_ck|(&DDR2_tCKE_ck<<4)|(&DDR2_tXP_ck<<8)|(&DDR2_tXSR_ck<<0x10)|(((&DDR2_tFAW_ps+&tCK-1)/&tCK)<<0x18)
+
+//--------------------------------------------------------------------------
+// MRS Setting
+
+	//Direct Command
+	d.s 0x73430010 %L 0x07000000;//NOP
+	d.s 0x73430010 %L 0x01000000;//precharge all
+	d.s 0x73430010 %L 0x00020000;
+	d.s 0x73430010 %L 0x00030000;
+	d.s 0x73430010 %L 0x00010000;
+	d.s 0x73430010 %L 0x00000100;
+	d.s 0x73430010 %L 0x01000000;//precharge all
+	d.s 0x73430010 %L 0x05000000;//AREF
+	d.s 0x73430010 %L 0x05000000;//AREF
+	d.s 0x73430010 %L 0x05000000;//AREF
+	d.s 0x73430010 %L 0x00000000;	// DLL reset release.
+	d.s 0x73430010 %L (&DDR2_BURST_LEN|(&DDR2_READ_BURST_TYPE<<3)|(&DDR2_CL<<4)|(((&DDR2_tWR_ps+&tCK-1)/&tCK)<<0x9))
+	&i=0.
+	while &i<20.
+	(
+	    &i=&i+1
+	)
+	d.s 0x73430010 %L 0x00010380; // OCD Calibration default
+	&i=0.
+	while &i<20.
+	(
+	    &i=&i+1
+	)
+	if (&DDR2_CLK>=&DDR2_ODT_ENABLE_MIN_FREQ)
+		d.s 0x73430010 %L 0x00010000|(&DDR2_ODT<<2)|(&DDR2_DIC<<1)
+	else
+		d.s 0x73430010 %L 0x00010000|(&DDR2_DIC<<1)
+
+	if &DDR2_LOGICAL_CHIP_NUM==2
+	(
+		d.s 0x73430010 %L 0x07000000|0x00100000;//NOP
+		d.s 0x73430010 %L 0x01000000|0x00100000;//precharge all
+		d.s 0x73430010 %L 0x00020000|0x00100000;
+		d.s 0x73430010 %L 0x00030000|0x00100000;
+		d.s 0x73430010 %L 0x00010000|0x00100000;
+		d.s 0x73430010 %L 0x00000100|0x00100000;
+		d.s 0x73430010 %L 0x01000000|0x00100000;//precharge all
+		d.s 0x73430010 %L 0x05000000|0x00100000;//AREF
+		d.s 0x73430010 %L 0x05000000|0x00100000;//AREF
+		d.s 0x73430010 %L 0x05000000|0x00100000;//AREF
+		d.s 0x73430010 %L 0x00000000|0x00100000;	// DLL reset release.
+		d.s 0x73430010 %L (&DDR2_BURST_LEN|(&DDR2_READ_BURST_TYPE<<3)|(&DDR2_CL<<4)|(((&DDR2_tWR_ps+&tCK-1)/&tCK)<<0x9)|0x00100000)
+		&i=0.
+		while &i<20.
+		(
+		    &i=&i+1
+		)
+		d.s 0x73430010 %L 0x00010380|0x00100000; // OCD Calibration default
+		&i=0.
+		while &i<20.
+		(
+		    &i=&i+1
+		)
+		if (&DDR2_CLK>=&DDR2_ODT_ENABLE_MIN_FREQ)
+			d.s 0x73430010 %L 0x00010000|(&DDR2_ODT<<2)|(&DDR2_DIC<<1)|0x00100000;
+		else
+			d.s 0x73430010 %L 0x00010000|(&DDR2_DIC<<1)|0x00100000;
+	)
+
+//--------------------------------------------------------------------------
+
+	//Miscellaneous Configuration : COMMON 
+	//*(volatile unsigned long *)addr_mem(0x410020) |= Hw17; //creq2=1 : exit low power
+	&i=data.long(R:0x73410020)
+	&i=&i|0x00020000
+	d.s 0x73410020 %L &i
+	
+	//while(!((*(volatile unsigned long *)addr_mem(0x410020))&Hw24)); //cack2==1 : wait for acknowledgement to request..
+	&i=0.
+	while &i==0.
+	(
+		&i=data.long(R:0x73410020) 
+		&i=&i&0x01000000
+	)
+	
+	d.s 0x73430000 %L 0x30FF2038
+
+	if &DDR2_BANK_NUM==8
+	(
+		&i=0.
+		while &i!=0x44444444
+		(
+			&i=data.long(R:0x73430048)
+			&i=&i&0xFFFFFFFF
+		)
+	)
+	else
+	(
+		&i=0.
+		while &i!=0x00004444
+		(
+			&i=data.long(R:0x73430048)
+			&i=&i&0x0000FFFF
+		)
+	)
+
+	if &DDR2_LOGICAL_CHIP_NUM==2
+	(
+		if &DDR2_BANK_NUM==8
+		(
+			&i=0.
+			while &i!=0x44444444
+			(
+				&i=data.long(R:0x7343004C)
+				&i=&i&0xFFFFFFFF
+			)
+		)
+		else
+		(
+			&i=0.
+			while &i!=0x00004444
+			(
+				&i=data.long(R:0x7343004C)
+				&i=&i&0x0000FFFF
+			)
+		)
+	)
+
+//--------------------------------------------------------------------------
+

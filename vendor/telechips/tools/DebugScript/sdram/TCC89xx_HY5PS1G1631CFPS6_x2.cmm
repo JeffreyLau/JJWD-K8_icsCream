@@ -1,0 +1,244 @@
+
+&MEM_SIZE=256
+&DRAM_ROW=13
+
+
+	// 37.7 ms
+	d.s 0xF0400030 %L 0x01010101;
+	d.s 0xF0400034 %L 0x01010101;
+
+	d.s 0xF0400000 %L 0x002ffff4; // XI - corebus
+	d.s 0xF0400008 %L 0x00200014; // XI - memebus
+	d.s 0xF040001C %L 0x00200014; // XI - smubus
+
+//PLL0
+	d.s 0xF0400020 %L 0x0100FA03; // pms - pllout_500M 
+	d.s 0xF0400020 %L 0x8100FA03; // pll pwr on	
+//	d.s 0xF0400020 %L 0x0100C802; // pms - pllout_600M 
+//	d.s 0xF0400020 %L 0x8100C802; // pll pwr on	
+
+	&i=0
+	while &i<20
+	(
+	    &i=&i+1
+	)
+
+//PLL3  for membus
+	d.s 0xF040002C %L 0x00005303; // pms - pllout_332M
+	d.s 0xF040002C %L 0x80005303; //	pll pwr on
+//	d.s 0xF040002C %L 0x00002001; // pms - pllout_384M
+//	d.s 0xF040002C %L 0x80002001; //	pll pwr on
+
+	&i=0
+	while &i<20
+	(
+	    &i=&i+1
+	)
+
+	d.s 0xF0400000 %L 0x002FFFF0; // pll0 == corebus
+	d.s 0xF0400008 %L 0x00200013; // memebus %L pll3/2;
+	d.s 0xF0400010 %L 0x00200013; // iobus %L pll2/2;
+	d.s 0xF040001C %L 0x00200030; // smubus %L pll3/2;
+
+	&i=0
+	while &i<20
+	(
+	    &i=&i+1
+	)
+	
+	d.s 0xf0302004 %L 0x00000003; // PL341_PAUSE
+	d.s 0xF0302004 %L 0x00000004; // PL341_CONFIGURE
+	
+	//d.s 0xF030200C |= 0x00140000; 
+	&i=data.long(R:0xF030200C)
+	&i=&i|0x00140000
+	d.s 0xF030200C %L &i
+
+	//330Mhz
+	if &DRAM_ROW==14
+	(
+		// Elpida
+		d.s 0xF030200C %L 0x0015001A; // config0 column 10bit, row 14bit
+	)
+	else
+	(
+		// Samsung, Hynix
+		d.s 0xF030200C %L 0x00150012; // config0 column 10bit, row 13bit
+	)
+
+	d.s 0xF0302010 %L 0x00000445; // refresh 
+
+	if &MEM_SIZE==128
+	(
+		d.s 0xF030204C %L 0x00000540; // config2
+	)
+	else if &MEM_SIZE==256
+	(
+		d.s 0xF030204C %L 0x00000571; // config2
+	)
+	else if &MEM_SIZE==512
+	(
+		d.s 0xF030204C %L 0x00000571; // config2
+	)
+	
+	d.s 0xF0302014 %L 0x0000000A; // cas_latency
+	d.s 0xF030201c %L 0x00000003; // tMRD
+	//New
+   // 1 Tick %L 3.6ns
+	//SCSEMICON
+	//d.s 0xf0302020 %L 0x00000014; // tRAS - 45ns
+	//d.s 0xf0302024 %L 0x00000018; // tRC	- 60ns
+	//d.s 0xf0302028 %L 0x0000090B; // tRCD - 15ns
+	//d.s 0xf030202c %L 0x00003336; // tRFC - 105ns
+	//d.s 0xf0302030 %L 0x0000090B; // tRP	- 15ns
+	d.s 0xf0302020 %L 0x0000000D; // tRAS - 45ns
+	d.s 0xf0302024 %L 0x00000011; // tRC	- 60ns
+	d.s 0xf0302028 %L 0x00000205; // tRCD - 15ns
+	d.s 0xf030202c %L 0x00001B1E; // tRFC - 105ns
+	d.s 0xf0302030 %L 0x00000205; // tRP	- 15ns
+
+
+	d.s 0xF0302034 %L 0x00000005; // tRRD
+	d.s 0xF0302038 %L 0x00000006; // tWR
+	d.s 0xF030203c %L 0x00000003; // tWTR
+	d.s 0xF0302040 %L 0x00000003; // tXP
+	d.s 0xF0302044 %L 0x00000022; // tXSR
+	d.s 0xF0302048 %L 0x000000FA; // tESR
+	d.s 0xF0302054 %L 0x00001619; // tFAW
+
+	if &MEM_SIZE==128
+	(
+		d.s 0xF0302200 %L 0x000040f8; // config_chip0
+	)
+	else if &MEM_SIZE==256
+	(
+		d.s 0xF0302200 %L 0x000040f0; // config_chip0
+	)
+	else if &MEM_SIZE==512
+	(
+		d.s 0xF0302200 %L 0x000040E0; // config_chip0
+	)
+
+	d.s 0xF0302004 %L 0x00000003; // PL341_PAUSE
+	//while (((d.s 0xf0302000) & (0x03)) != 2);	// Wait until PAUSE
+	&i=0
+	while &i!=2
+	(
+		&i=data.long(R:0xf0302000)
+		&i=&i&0x03
+	)
+
+	d.s 0xF0302004 %L 0x00000001; // PL341_SLEEP
+	//while (((d.s 0xf0302000) & (0x03)) != 3);	// Wait until SLEEP
+	&i=0
+	while &i!=3
+	(
+		&i=data.long(R:0xf0302000)
+		&i=&i&0x03
+	)
+
+	d.s 0xF030302C %L 0x00004000; // SSTL SDRAM IO Control Register 
+	// - SOC
+	//d.s  0xf0303004 |= 0x00800000; // bit23 enable -synopt enable
+	&i=data.long(R:0xf0303004)
+	&i=&i|0x00800000
+	d.s 0xf0303004 %L &i
+
+	
+	if &DRAM_ROW==14
+	(
+		// Elpida, SCSemicon
+		d.s 0xF0303020 %L 0x00010107; // emccfg_config0
+	)
+	else
+	(
+		// Samsung, Hynix
+		d.s 0xF0303020 %L 0x00010103; // emccfg_config0
+	)
+
+	d.s 0xF0303024 %L 0x00000000; // SDRAM PHY Control Register 
+	d.s 0xF0304400 %L 0x00000000; // DDR2PHY_PHYMODE
+	d.s 0xF0304404 %L 0x00000001; // DLLCTRL
+	d.s 0xF0304408 %L 0x00001717; // DLLPDCFG
+	d.s 0xF0304404 %L 0x00000003; // DLLCTRL
+
+	//while (!((d.s 0xF0304404) & (3<<3)));	// Wait until PDFL == 1
+	&i=0
+	while &i==0
+	(
+		&i=data.long(R:0xF0304404)
+		&i=&i&0x18
+	)
+
+
+	d.s 0xF0304424 %L 0x00000035; // DLLFORCELOCK
+	d.s 0xF030440C %L 0x00000006; // GATECTRL
+	d.s 0xF0304430 %L 0x00000004; // RDDELAY	
+	
+	d.s 0xF0304428 %L 0x00069151; // ZQCTRL
+	//while (!((d.s 0xF030442c) & (1)));	// Wait until Calibration completion without error
+	&i=0
+	while &i==0
+	(
+		&i=data.long(R:0xF030442c)
+		&i=&i&0x01
+	)
+
+	d.s 0xF0304428 %L 0x00069153; // ZQCTRL
+
+	&i=0
+	while &i<20
+	(
+	    &i=&i+1
+	)
+
+	d.s 0xF0304428 %L 0x00069151; // ZQCTRL
+
+	&i=0
+	while &i<20
+	(
+	    &i=&i+1
+	)
+	
+	d.s 0xF0302004 %L 0x00000002; // PL34X_WAKEUP
+	//while (((d.s 0xf0302000) & (0x03)) != 2);	// Wait until PAUSE
+	&i=0
+	while &i!=2
+	(
+		&i=data.long(R:0xf0302000)
+		&i=&i&0x03
+	)
+
+	d.s 0xF0302004 %L 0x00000004; // PL341_CONFIGURE
+	//while (((d.s 0xf0302000) & (0x03)) != 0);	// Wait until CONFIGURE
+	&i=1.
+	while &i!=0
+	(
+		&i=data.long(R:0xf0302000)
+		&i=&i&0x03
+	)
+
+	d.s 0xF0302008 %L 0x000c0000; // Direct COmmnad Register NOP
+	d.s 0xF0302008 %L 0x00000000; // Direct COmmnad Register Precharge all
+	d.s 0xF0302008 %L 0x00040000; // Direct COmmnad Register Auto Refresh
+	d.s 0xF0302008 %L 0x00040000; // Direct COmmnad Register 
+	d.s 0xF0302008 %L 0x000a0000; // Direct COmmnad Register Extended Mode Register 2
+	d.s 0xF0302008 %L 0x000b0000; // Direct COmmnad Register Extended Mode Register 3
+	d.s 0xF0302008 %L 0x00090000; // Direct COmmnad Register Extended Mode Register 1
+	d.s 0xF0302008 %L 0x00080952; // Direct COmmnad Register Mode register 
+	d.s 0xF0302008 %L 0x00000000; // Direct COmmnad Register Precharge all
+
+	&i=0
+	while &i<20
+	(
+		d.s 0xF0302008 %L 0x00040000; // Direct COmmnad Register 
+	    &i=&i+1
+	)
+
+	d.s 0xF0302008 %L 0x00080852; // Direct COmmnad Register 
+	d.s 0xF0302008 %L 0x00090380; // Direct COmmnad Register 
+	d.s 0xF0302008 %L 0x00090004; // Direct COmmnad Register ODT %L 75 Ohm
+
+	d.s 0xF0302004 %L 0x00000000; // PL341_GO
+
+
