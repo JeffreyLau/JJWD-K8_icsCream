@@ -1,0 +1,38 @@
+[
+{
+  name: "android.telephony.cts.PhoneNumberFormattingTextWatcherTest#testPhoneNumberFormattingTextWatcher",
+  bug: 3198578
+},
+{
+  name: "android.text.cts.AndroidCharacterTest#testMirror",
+  bug: 4371654
+},
+{
+  name: "android.openglperf.cts.GlVboPerfTest#testVboWithVaryingIndexBufferNumbers",
+  bug: 5898262
+},
+{
+  name: "android.webkit.cts.WebViewTest#testRequestFocusNodeHref",
+  bug: 3241968
+},
+{
+  names: [
+    "libcore.java.net.URLConnectionTest#testServerClosesSocket",
+    "libcore.java.net.URLConnectionTest#testServerShutdownInput",
+    "libcore.java.net.URLConnectionTest#testServerShutdownOutput"
+  ],
+  bug: 5534202
+},
+{
+  names: [
+    "libcore.java.net.ConcurrentCloseTest#test_read",
+    "libcore.net.http.HttpResponseCacheTest#testClientPrematureDisconnectWithChunkedEncoding"
+  ],
+  bug: 5498103
+},
+{
+  name: "libcore.java.security.KeyPairGeneratorTest#test_getInstance",
+  bug: 5513723
+}
+]
+
