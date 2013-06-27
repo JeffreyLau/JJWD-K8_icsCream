@@ -1,0 +1,26 @@
+; TCC88xx Cortex-A8 in JTAG Direct Mode
+
+RESet
+
+system.option.TRST ON
+;system.option.CFLUSH ON
+;system.option.ResBreak ON
+;system.option.EnReset ON
+;system.option.WaitReset ON
+system.jtagclock 10mhz
+
+sys.cpu cortexa8
+system.option rb on
+system.option.mmu off
+system.option dacr on
+system.option.enreset off
+system.option.trst on
+
+SYStem.MultiCore MEMORYACCESSPORT	0x0
+SYStem.MultiCore DEBUGACCESSPORT	0x1
+SYStem.MultiCore COREBASE		0x80007000  ; ARM core
+SYStem.MultiCore ETBBASE		0x80001000  ; ETB
+SYStem.MultiCore ETMBASE		0x80008000  ; ETM
+SYStem.MultiCore FUNNELBASE		0x80004000  ; FUNNEL
+
+sys.mode attach

@@ -1,0 +1,123 @@
+// TCC88xx Memory setting....
+// CPU: 600Mhz , BUS: 300Mhz, ddr3 256
+
+
+local &i &j
+
+d.s 0xF0403014 %L 0x00000100 //REMAP to IRAM
+d.s 0xF0400000 %L 0x002FFFF4 //CLK0_XI
+d.s 0xF0400008 %L 0x002F1F14 //CLK2_XI
+d.s 0xF040001C %L 0x002F1F14 //CLK4_XI
+
+d.s 0xF0400020 %L 0x00012C03 //PLL_PWROFF
+d.s 0xF0400020 %L 0x41016803 //PMS_720M
+d.s 0xF0400020 %L 0xC1012C03 //PLL_PWRON
+
+d.s 0xF0400024 %L 0x00012C03 //PLL3_PWROFF
+d.s 0xF0400024 %L 0x4100A503 //PMS_660M
+d.s 0xF0400024 %L 0xC000A503 //PLL3_PWRON
+
+d.s 0xF0400000 %L 0x002ffff0 //COREBUS
+d.s 0xF0400008 %L 0x00200013 //MEMBUS
+d.s 0xF040001C %L 0x00200030 //SMUBUS
+
+//ddr3
+d.s 0xF0303020 %L 0x0003010b //EMCCFG
+
+&i=0.
+while &i<6400.
+(
+    &i=&i+1
+)
+
+
+
+d.s 0xF0303024 %L 0x00000300 //PHYCFG
+d.s 0xF0304400 %L 0x0000080a //PHYMODE
+
+d.s 0xF0309400 %L 0x00101708  //PhyControl0
+d.s 0xF0309404 %L 0x00000086  //PhyControl1
+d.s 0xF0309408 %L 0x00000000  //PhyControl2
+d.s 0xF030940c %L 0x00000000  //PhyControl3
+d.s 0xF0309410 %L 0x201c7004  //PhyControl4
+d.s 0xF0309400 %L 0x0110140B  //PhyControl0
+
+&i=0.
+&j=0xF0309418 //PhyStatus0
+
+while &i==0. 	// Wait end dll locked
+(
+    &i=data.long(R:&j)
+    print "----------->[Enable Not ERROR: Hw0 High] &i"
+    &i=&i&0x04
+)
+print "dll locked"
+
+d.s 0xF0309404 %L 0x0000008e  //PhyControl1
+d.s 0xF0309404 %L 0x00000086  //PhyControl1
+d.s 0xF0309414 %L 0x00039003   //PhyControl5
+d.s 0xF0309414 %L 0x0003900b    //PhyControl5
+
+
+&i=0.
+&j=0xF0309420 //PhyStatus2
+
+while &i==0. 	// Wait end dll locked
+(
+    &i=data.long(R:&j)
+    print "----------->[Enable Not ERROR: Hw0 High] &i"
+    &i=&i&0x01
+)
+
+print "zq end"
+
+d.s 0xF0309004 %L 0x0000018a  //MemControl
+d.s 0xF0309008 %L 0x40f81313  //MemConfig0
+d.s 0xF030900c %L 0x48f81313  //MemConfig1
+d.s 0xF0309000 %L 0x40ff3010  //ConControl
+
+
+d.s 0xF0309014 %L 0x01000000  //PrechConfig
+
+
+d.s 0xF0309100 %L 0x924 //AREF
+d.s 0xF0309104 %L 0x22	//TRFC
+d.s 0xF0309108 %L 0x4	//TRRD
+d.s 0xF030910c %L 0x5	//TRP
+d.s 0xF0309110 %L 0x5	//TRCD
+d.s 0xF0309114 %L 0x10  //TRC
+d.s 0xF0309118 %L 0xC  //TRAS
+d.s 0xF030911c %L 0x4	//TWTR
+d.s 0xF0309120 %L 0x5	//TWR
+d.s 0xF0309124 %L 0x4	//TRTP
+d.s 0xF0309128 %L 0x6	//CL
+d.s 0xF030912c %L 0x5	//WL
+d.s 0xF0309130 %L 0x6	//RL
+d.s 0xF0309134 %L 0xA  //FAW
+d.s 0xF0309138 %L 0x40  //TXSR
+d.s 0xF030913c %L 0x3	//TXP
+d.s 0xF0309140 %L 0x3	//TCKE
+d.s 0xF0309144 %L 0x4	//TMRD
+
+
+
+
+&i=0.
+while &i<1600.
+(
+    &i=&i+1
+)
+
+d.s 0xF0309010 %L 0x08000000	//DirectCmd
+
+d.s 0xF0309010 %L 0x07000000	//DirectCmd
+d.s 0xF0309010 %L 0x00020000	//DirectCmd
+d.s 0xF0309010 %L 0x00020400	//DirectCmd
+d.s 0xF0309010 %L 0x00030000	//DirectCmd
+d.s 0xF0309010 %L 0x00010042	//DirectCmd
+d.s 0xF0309010 %L 0x00001d20	//DirectCmd
+d.s 0xF0309010 %L 0x0a000400	//DirectCmd
+
+d.s 0xF0309000 %L 0x60ff3030  //ConControl
+
+d.s 0xF0303020 %L 0x0007010b //EMCCFG

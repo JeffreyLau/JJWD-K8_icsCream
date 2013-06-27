@@ -1,0 +1,221 @@
+
+global &KERNEL_SRC
+global &KERNEL_ELF
+
+&KERNEL_SRC="../"
+//&STRIPPATH=     "/home/B040017/"
+//&SMBDRIVE=      "Z:\"
+
+sys.down
+
+area.res
+area
+print "Select target:"
+print " 1. surf7k"
+print " 2. surf8k"
+print " 3. tcc9200s_evm"
+print " 4. tcc9201_evm"
+print " 5. tcc8900_evm"
+print " 6. tcc9300_evm"
+print " 7. tcc9300cm_evm"
+print " 8. tcc8800_evm"
+print ">> "
+enter &select
+
+global &TARGET
+global &PLATFORM
+
+if (&select==1)
+(
+  &TARGET="surf7k"
+)
+else if (&select==2)
+(
+  &TARGET="surf8k"
+)
+else if (&select==3)
+(
+  &TARGET="tcc9200s_evm"
+  &PLATFORM="tcc92xx"
+)
+else if (&select==4)
+(
+  &TARGET="tcc9201_evm"
+  &PLATFORM="tcc92xx"
+)
+else if (&select==5)
+(
+  &TARGET="tcc8900_evm"
+  &PLATFORM="tcc92xx"
+)
+else if (&select==6)
+(
+  &TARGET="tcc9300_evm"
+  &PLATFORM="tcc93xx"
+)
+else if (&select==7)
+(
+  &TARGET="tcc9300cm_evm"
+  &PLATFORM="tcc93xx"
+)
+else if (&select==8)
+(
+  &TARGET="tcc8800_evm"
+  &PLATFORM="tcc88xx"
+)
+
+if ("&TARGET"=="surf7k")
+(
+  &KERNEL_ELF="../build-aboot-surf7k/lk"
+  do config_a11.cmm
+)
+else if ("&TARGET"=="surf8k")
+(
+  &KERNEL_ELF="../build-aboot-surf8k/lk"
+  do config_scorpion.cmm
+)
+else if ("&TARGET"=="tcc9200s_evm")
+(
+  &KERNEL_ELF="../build-tcc9200s_evm/lk"
+  do config_tcc92xx.cmm
+)
+else if ("&TARGET"=="tcc9201_evm")
+(
+  &KERNEL_ELF="../build-tcc9201_evm/lk"
+  do config_tcc92xx.cmm
+)
+else if ("&TARGET"=="tcc8900_evm")
+(
+  &KERNEL_ELF="../build-tcc8900_evm/lk"
+  do config_tcc92xx.cmm
+)
+else if ("&TARGET"=="tcc9300_evm")
+(
+  &KERNEL_ELF="../build-tcc9300_evm/lk"
+  do config_tcc93xx.cmm
+)
+else if ("&TARGET"=="tcc9300cm_evm")
+(
+  &KERNEL_ELF="../build-tcc9300cm_evm/lk"
+  do config_tcc93xx.cmm
+)
+else if ("&TARGET"=="tcc8800_evm")
+(
+  &KERNEL_ELF="../build-tcc8800_evm/lk"
+  do config_tcc88xx.cmm
+)
+
+sys.mode attach
+
+if state.run()
+(
+  break
+)
+
+TrOnchip.Set DABORT OFF
+TrOnchip.Set PABORT OFF
+TrOnchip.Set UNDEF OFF
+//SETUP.IMASKASM ON
+//SETUP.IMASKHLL ON
+
+if ("&PLATFORM"=="tcc93xx")
+(
+	if ("&TARGET"=="tcc9300_evm")
+	(
+		area.res
+		area
+		print "Select Memory"
+		print " 1. DDR2"
+		print " 2. DDR3"
+		print ">> "
+		enter &select_ddr
+
+		if (&select_ddr==1)
+		(
+			do TCC93x_memory_init_ddr2.cmm
+		)
+		else if (&select_ddr==2)
+		(
+			do TCC93x_memory_init_ddr3.cmm
+		)
+	)
+	if ("&TARGET"=="tcc9300cm_evm")
+	(
+		do TCC93x_memory_init_ddr3.cmm
+	)
+)
+
+if ("&PLATFORM"=="tcc88xx")
+(
+  area.res
+  area
+  print "Select memory"
+  print " 1. DDR2"
+  print " 2. DDR3"
+  print ">> "
+  enter &select
+
+  if (&select==1)
+  (
+    do tcc88xx_ddr2_memory_init.cmm
+  )
+  else if (&select==2)
+  (
+    do tcc88xx_ddr3_memory_init.cmm
+  )
+)
+
+data.load.ELF &KERNEL_ELF /RELPATH /PATH &KERNEL_SRC /GNU /ANYSYM
+//data.load.ELF &KERNEL_ELF /RELPATH /PATH &KERNEL_SRC /GNU /ANYSYM /STRIPPART "&STRIPPATH" /PATH "&SMBDRIVE"
+
+if ("&PLATFORM"=="tcc92xx")
+(
+  register.set pc 0x42000000
+)
+else if ("&PLATFORM"=="tcc93xx")
+(
+  register.set pc 0x42000000
+)
+else if ("&PLATFORM"=="tcc88xx")
+(
+  register.set pc 0x42000000
+)
+else
+(
+  register.set pc 0
+)
+register.set r0 0
+;register.set r1 &MACHINE_ID
+;register.set r2 &TAGS_ADDR
+
+tronchip.set dabort off
+tronchip.set pabort off
+
+;term.reset
+;term.size 70 100
+;term.scroll.on
+;term
+
+break.select program onchip
+break.delete
+;break.set platform_early_init
+break.set kmain
+
+; XXX
+if ("&TARGET"=="tcc9300_evm")
+(
+//	d.load.elf ../../../../kernel/vmlinux /anysym /noreg /noclear /nocode /gnu /cpp /path ../../../../kernel
+//	d.load.binary ../../../../out/target/product/tcc9300/ramdisk.img 0x41000000 /noclear /noreg /nosymbol
+//	d.load.binary ../../../../kernel/arch/arm/boot/Image 0x40008000 /nosymbol /noclear /noreg
+)
+
+if ("&TARGET"=="tcc9300cm_evm")
+(
+//	d.load.elf ../../../../kernel/vmlinux /anysym /noreg /noclear /nocode /gnu /cpp /path ../../../../kernel
+//	d.load.binary ../../../../out/target/product/tcc9300/ramdisk.img 0x41000000 /noclear /noreg /nosymbol
+//	d.load.binary ../../../../kernel/arch/arm/boot/Image 0x40008000 /nosymbol /noclear /noreg
+)
+
+;go
+
+

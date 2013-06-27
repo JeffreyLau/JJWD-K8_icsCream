@@ -1,0 +1,18 @@
+; TCC93xx ARM11 in JTAG Direct Mode
+
+RESet
+
+system.option.TRST ON
+;system.option.CFLUSH ON
+;system.option.ResBreak ON
+;system.option.EnReset ON
+;system.option.WaitReset ON
+system.jtagclock RTCK
+
+sys.cpu arm1176jz
+system.option.mmu off
+system.option dacr on
+system.option.enreset off
+system.option.trst on
+
+sys.mode attach

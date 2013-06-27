@@ -1,0 +1,153 @@
+// TCC9300 Memory setting....
+// CPU: 600Mhz , BUS: 300Mhz, ddr3 256
+
+local &i &j
+
+	//ddr3
+	d.s 0xB0303020 %L 0x0003010b //EMCCFG
+
+	//while (((*(volatile unsigned long *)0xB030c208)) & 0xFFFFFFFF)!= 0x33333333); //Wait PAUSED
+	&i=0x0
+	&j=0xB030c208
+	while &i!=0x33333333
+	(
+		&i=data.long(d:&j)
+		&i=&i&0xFFFFFFFF
+	)
+	
+	&i=0
+	while &i<3200
+	(
+	    &i=&i+1
+	)
+
+	//clock setting start
+	//Set CLKDIVC0,CLKDIVC1. But it is diabled.
+	d.s 0xB0500048 %L 0x01010101
+	d.s 0xB050004C %L 0x01010101
+	d.s 0xB0500050 %L 0x01010101
+
+	//cpu bus - DirectXIN, Synchronous clock mode 
+	d.s 0xB0500000 %L 0x002ffff4
+	//mem bus - DirectXIN/2(It is for asynchronous clock mode)	
+	d.s 0xB0500008 %L 0x00200014
+	//io bus - DirectXIN/2
+	d.s 0xB0500010 %L 0x00200014
+
+	//Set PLL0
+	//PLL0 - power off : 800MHz, P(3), M(400), S(1), VSEL(1)
+	d.s 0xB0500030 %L 0x41019003
+	//PLL0 - power on
+	d.s 0xB0500030 %L 0xC1019003
+
+	//PLL2
+	//PLL2 - power off
+	d.s 0xB0500038 %L 0x4201d403
+	//PLL2 - 468MHz, P(3), M(468), S(2), VSEL(1)
+	d.s 0xB0500038 %L 0x4201D403
+	//PLL2 - power on
+	d.s 0xB0500038 %L 0xC201D403
+
+	&i=0
+	while &i<200
+	(
+	    &i=&i+1
+	)
+
+	//cpu bus - DirectPLL0, 800Mhz
+	d.s 0xB0500000 %L 0x002FFFF0
+	d.s 0xB0500008 %L 0x00200010
+	//io bus - DirectPLL2, 800MHz/2 = 400MHz
+	d.s 0xB0500010 %L 0x00200010
+
+	&i=0
+	while &i<200
+	(
+	    &i=&i+1
+	)
+
+	d.s 0xB0303024  %L 0x00000300 //PHYCFG
+
+	d.s 0xB0304400  %L 0x0000080A //PHYMODE
+	
+	d.s 0xB030C400  %L 0x00101708  //PhyControl0
+
+	d.s 0xB030C404  %L 0x00000086  //PhyControl1
+	d.s 0xB030C408  %L 0x00000000  //PhyControl2
+	d.s 0xB030C40c  %L 0x00000000  //PhyControl3
+	d.s 0xB030C410  %L 0x201c7004  //PhyControl4
+	d.s 0xB030C400  %L 0x0110170B  //PhyControl0
+
+	//while (((*(volatile unsigned long *)0xB030c418)) & (0x04)) != 4);	// dll locked
+	&i=0x0
+	&j=0xB030c418
+	while &i!=0x4
+	(
+		&i=data.long(d:&j)
+		&i=&i&0x04
+	)
+	&i=0
+	while &i<3200
+	(
+	    &i=&i+1
+	)
+
+	d.s 0xB030C404  %L 0x0000008e  //PhyControl1
+	d.s 0xB030C404  %L 0x00000086  //PhyControl1
+	d.s 0xB030C414  %L 0x00039003  //PhyControl5
+	d.s 0xB030C414  %L 0x0003900b  //PhyControl5
+
+	//while (((*(volatile unsigned long *)0xB030c420)) & (0x01)) != 1);	// zq end
+	&i=0x0
+	&j=0xB030c420
+	while &i!=0x1
+	(
+		&i=data.long(d:&j)
+		&i=&i&0x01
+	)
+	&i=0
+	while &i<3200
+	(
+	    &i=&i+1
+	)
+
+	d.s 0xB030C004  %L 0x0000018a  //MemControl
+	d.s 0xB030C008  %L 0x40f01313  //MemConfig0
+	d.s 0xB030C00c  %L 0x40f00313  //MemConfig1
+	d.s 0xB030C000  %L 0x40ff3010  //ConControl
+	d.s 0xB030C014  %L 0x01000000  //PrechConfig
+
+
+	d.s 0xB030C100  %L 0xC30 //AREF
+	d.s 0xB030C104  %L 0x2C	//TRFC
+	d.s 0xB030C108  %L 0x4	//TRRD
+	d.s 0xB030C10c  %L 0x6	//TRP 
+	d.s 0xB030C110  %L 0x6	//TRCD
+	d.s 0xB030C114  %L 0x12 //TRC 
+	d.s 0xB030C118  %L 0xF  //TRAS
+	d.s 0xB030C11c  %L 0x4	//TWTR
+	d.s 0xB030C120  %L 0x6	//TWR 
+	d.s 0xB030C124  %L 0x4	//TRTP
+	d.s 0xB030C128  %L 0x6	//CL
+	d.s 0xB030C12c  %L 0x5	//WL
+	d.s 0xB030C130  %L 0x6	//RL
+	d.s 0xB030C134  %L 0x12 //FAW 
+	d.s 0xB030C138  %L 0x30 //TXS
+	d.s 0xB030C13c  %L 0x3	//TXP 
+	d.s 0xB030C140  %L 0x3	//TCKE
+	d.s 0xB030C144  %L 0x4	//TMRD
+
+	d.s 0xB030C010  %L 0x08000000 //DirectCmd - XSR
+	
+	//after 500 us
+	d.s 0xB030C010  %L 0x07000000 //DirectCmd - NOP
+	d.s 0xB030C010  %L 0x00020000 //DirectCmd - MRS : MR2
+	d.s 0xB030C010  %L 0x00020400 //DirectCmd - MRS : MR2
+	d.s 0xB030C010  %L 0x00030000 //DirectCmd - MRS : MR3
+	d.s 0xB030C010  %L 0x00010042 //DirectCmd - MRS : MR1 : AL(0),Rtt_Nom(disable),OIC(RZQ/6) ,DLL(enable)
+	d.s 0xB030C010  %L 0x00001d20 //DirectCmd - MRS : MR0 : DLLPRE(off), WR(5), DLL Reset(Yes), MODE(0), CL(6), BL(8)
+	d.s 0xB030C010  %L 0x0a000400 //DirectCmd - ZQCL
+	
+	d.s 0xB030C000  %L 0x60ff3030 //ConControl
+	d.s 0xB0303020  %L 0x0007010b //EMCCFG
+

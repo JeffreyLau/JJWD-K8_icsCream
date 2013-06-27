@@ -1,0 +1,155 @@
+// TCC9300 Memory setting....
+// CPU: 600Mhz , BUS: 300Mhz, ddr2 256
+
+
+local &i &j
+
+
+d.s 0xb0503014 %L 0x00000100 //REMAP to IRAM
+d.s 0xb0500000 %L 0x002FFFF4 //PLL0_XI	
+d.s 0xb0500008 %L 0x002F1F14 //PLL2_XI
+d.s 0xb0500010 %L 0x002F1F14 //PLL4_XI
+ 
+
+d.s 0xb0500030 %L 0x00012C03 //PLL_PWROFF
+d.s 0xb0500030 %L 0x01012C03 //PMS_600M
+d.s 0xb0500030 %L 0x81012C03 //PLL_PWRON
+
+
+d.s 0xb0500000 %L 0x002ffff0 //COREBUS
+
+
+d.s 0xb0303020 %L 0x00070103 //EMCCFG
+
+
+
+d.s 0xB0302004 %L 0x00000004 // PL341_CONFIGURE
+
+
+d.s 0xb0304428 %L 0x00500000 // ZQCAL
+d.s 0xb0304428 %L 0x00500038 // ZQCAL
+d.s 0xb0304428 %L 0x005001F8 // ZQCAL
+d.s 0xb0304428 %L 0x005001F9 // ZQCAL
+
+&i=0.
+&j=0xB0304428
+
+while &i==0. 	// Wait until FLOCK == 1
+(
+    &i=data.long(R:&j)
+    print "----------->[Enable Not ERROR: Hw0 High] &i"
+    &i=&i&0x01
+)
+
+d.s 0xb0304428 %L 0x005001F8 // ZQCAL
+
+
+d.s 0xB0302014 %L 0x0000000A // cas_latency - 5
+d.s 0xB030201c %L 0x00000003 // tMRD
+
+//300Mhz timing
+d.s 0xB0302020 %L 0x0000001F // tRAS
+d.s 0xB0302024 %L 0x0000001B // tRC
+d.s 0xB0302028 %L 0x00000407 // tRCD
+d.s 0xB030202c %L 0x00002225 // tRFC 
+d.s 0xB0302030 %L 0x0000070A // tRP
+d.s 0xB0302034 %L 0x00000005 // tRRD
+d.s 0xB0302038 %L 0x00000007 // tWR
+d.s 0xB030203c %L 0x00000004 // tWTR
+d.s 0xB0302040 %L 0x00000003 // tXP
+d.s 0xB0302044 %L 0x00000028 // tXSR
+d.s 0xB0302048 %L 0x000000FA // tESR 
+d.s 0xB0302054 %L 0x00001619 // tFAW 
+
+
+
+
+d.s 0xb030200c %L 0x00150012 //CFG0
+d.s 0xb0302010 %L 0x00000507 //REFRESH
+
+
+d.s 0xb030204c %L 0x00000571 //CFG2
+d.s 0xb0302200 %L 0x000040F0 //CFG_CHIP0
+
+
+d.s 0xb0303024 %L 0x00000000 //PHYCTRL
+d.s 0xb030302c %L 0x00004000 //SSTL
+
+
+d.s 0xB0304400 %L 0x00000808 // ddr2, differential DQS, gate siganl for ddr2, differential receiver
+d.s 0xB0304404 %L 0x00080001 // DLL-On
+d.s 0xB0304408 %L 0x00001414 // dll phase detect 
+d.s 0xB0304404 %L 0x00000003// dll-on|start
+
+//DLL(Delay Lock Loop) check flock
+&i=0.
+&j=0xB0304404
+
+
+while &i==0. 	// Wait until FLOCK == 1
+(
+    &i=data.long(R:&j)
+    print "----------->[FLOCK : Hw4 High] &i"
+    &i=&i&0x18
+)
+
+
+d.s 0xB0304424 %L 0x00000035 // DLLFORCELOCK
+d.s 0xB030440c %L 0x00000006 // GATECTRL
+d.s 0xB0304430 %L 0x00000004 // RDDELAY
+
+
+d.s 0xB0304428 %L 0x0006f151 // ZQCTRL 
+
+&i=0.
+&j=0xB030442c
+
+while &i==0. 	// Wait until FLOCK == 1
+(
+    &i=data.long(R:&j)
+    print "----------->[Enable Not ERROR: Hw0 High] &i"
+    &i=&i&0x01
+)
+
+
+d.s 0xB0304428 %L 0x0006f153 // ZQCTRL
+d.s 0xB0304428 %L 0x0006f151// ZQCTRL
+
+
+d.s 0xB0302008 %L 0x000c0000 //CMD, BNKA
+d.s 0xB0302008 %L 0x00000000 // pre-charge all
+//d.s 0xB0302008 %L 0x00040000 // auto-refresh
+//d.s 0xB0302008 %L 0x00040000 // auto-refresh
+d.s 0xB0302008 %L 0x000a0000 // EMRS1
+d.s 0xB0302008 %L 0x000b0000 /// EMRS2
+d.s 0xB0302008 %L 0x00090000 // MRS
+d.s 0xB0302008 %L 0x00080952 // MRS burst 4 & CAS & DLL reset yes & write recovery
+d.s 0xB0302008 %L 0x00000000 // pre-charge all
+
+&i=0.
+while &i<100.	//wait 200 Clock
+(
+d.s 0xB0302008 %L 0x00040000 // auto-refresh
+    &i=&i+1
+)
+
+d.s 0xB0302008 %L 0x00080852 // MRS burst 4 & CAS & DLL reset no & write recovery
+d.s 0xB0302008 %L 0x00090380 // EMRS1 - OCD Calibraiton default 
+d.s 0xB0302008 %L 0x00090004 // OCD Calibraiton default & ODT 75 ON
+
+d.s 0xB0302004 %L 0x00000000 // PL341_GO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
